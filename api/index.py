@@ -196,6 +196,63 @@ def gen_pdf(data: FormData):
         "Bat Shoulder Angle": data.batShoulderAng
     })
 
+    # Add Pitching Mechanics Breakdown Section
+    add_section("Pitching Mechanics Breakdown", {
+        "Starting Position": data.startingPos,
+        "Leg Lift + Initial Weight Shift": data.legLiftInitWeightShift,
+        "Glute Engagement": data.engageGlute,
+        "Back Leg Drive": data.pushBackLeg,
+        "Vertical Shin Angle": data.vertShinAngViR,
+        "Stay On Heel": data.stayHeel,
+        "Drive Direction": data.driveDirection,
+        "Out of Drive Early": data.outDriveEarly,
+        "Lateral Vertical Ground": data.latVertGround,
+        "Back Knee Drive": data.backKneeDrive,
+        "Hip Clearance": data.hipClear,
+        "Rotation Down": data.rotDown,
+        "Independent Movements": data.movesIndependent,
+        "Excessive Rotation": data.excessiveRot,
+        "Early Torso Rotation": data.earlyTorsoRot,
+        "Torso Not Segmenting": data.torsoNotSegment,
+        "Bow Flex Bow": data.bowFlexBow,
+        "Scapular Dig": data.scapularDig,
+        "Reflexive Pectoral Fire": data.reflexivePecFire,
+        "Arm Slot & Torso Rotation": data.armSlotTorsoRot,
+        "Rotation Perpendicular to Spine": data.rotPerpSpine,
+        "Excessive Tilt": data.excessiveTilt,
+        "Throw Uphill": data.throwUpHill,
+        "Arm Swing & Cap Momentum": data.armSwingCapMom,
+        "Overly Pronated or Supinated": data.overlyPronOrSup,
+        "Overly Flexed or Extended Wrist": data.overlyFlexOrExtWrist,
+        "Elbow In Line": data.elbowInLine,
+        "Late or Early Flip Up": data.lateEarlyFlipUp,
+        "Elbow Flexion to 100 Degrees": data.elbowFlexionHundred,
+        "Full Scapular Retraction & Abduction": data.fullScapRetractAbduct,
+        "Arm Drag": data.armDrag,
+        "Limited Layback": data.limitedLayback,
+        "Elbow Pushing Forward": data.elbowPushForward,
+        "Straight or Neutral Elbow": data.straightElbowNeutral,
+        "Arm Works Independently": data.armWorksInd,
+        "Early Supination": data.earlySup,
+        "Works Opposite to Glove": data.workOppGlove,
+        "Retract & Abduct at Landing": data.retractAbductLanding,
+        "Rotates Into Plane": data.rotatesIntoPlane,
+        "Leaks Energy": data.leaks,
+        "Front Foot Contact": data.frontFootContact,
+        "Pawback Mechanics": data.pawback,
+        "Knee Stability Transition": data.kneeStabTran,
+        "Knee Stability Front Side": data.kneeStabFron,
+        "Forearm Pronation": data.forearmPron,
+        "Shoulder Internal Rotation": data.shoulderIntern,
+        "Scapular Release": data.scapRelease,
+        "Thoracic Flexion": data.thoracicFlex,
+        "No Violent Recoil": data.noViolentRecoil,
+        "Overall Tempo": data.overallTempo,
+        "Overall Rhythm": data.overallRhythm,
+        "Properly Timed Intent": data.propTimedIntent,
+        "Cervical Position": data.cervPos
+    })
+
     # Add pitching breakdown in the same format...
 
     # Build the PDF
