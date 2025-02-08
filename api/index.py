@@ -211,6 +211,7 @@ def gen_pdf(data: FormData):
         headers={"Content-Disposition": "attachment; filename=athlete_report.pdf"}
     )
 
+# add comment test
 @app.get("/")
 def health_check():
     return { "Server": "Healthy" }
