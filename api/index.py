@@ -12,6 +12,7 @@ app = FastAPI()
 
 # Define the Data Model (Matches TypeScript `FormData`)
 class FormData(BaseModel):
+    firstName: str
     height: str
     weight: float
     age: int
@@ -130,7 +131,7 @@ def gen_pdf(data: FormData):
     )
 
     # Title
-    elements.append(Paragraph("Athlete Performance Report", title_style))
+    elements.append(Paragraph(f"Athlete Performance Report For {data.firstName}", title_style))
     elements.append(Spacer(1, 12))
 
     # Function to format sections
