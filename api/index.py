@@ -112,8 +112,14 @@ class FormData(BaseModel):
 @app.post("/gen-pdf")
 def gen_pdf(data: FormData):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.75 * inch, rightMargin=0.75 * inch,
-                            topMargin=1 * inch, bottomMargin=1 * inch)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=0.75 * inch,
+        rightMargin=0.75 * inch,
+        topMargin=1 * inch,
+        bottomMargin=1 * inch
+    )
     elements = []
 
     # Styles
@@ -122,7 +128,7 @@ def gen_pdf(data: FormData):
     subtitle_style = styles["Heading2"]
     normal_style = styles["Normal"]
 
-    # Custom Styles
+    # Custom Styles for section titles
     section_title_style = ParagraphStyle(
         "SectionTitle",
         parent=subtitle_style,
@@ -143,7 +149,15 @@ def gen_pdf(data: FormData):
         elements.append(Paragraph(title, section_title_style))
         elements.append(Spacer(1, 6))
 
-        table_data = [[key.replace("_", " ").title(), str(value)] for key, value in fields.items()]
+        table_data = []
+        for key, value in fields.items():
+            # For fields with longer text (e.g., those ending with "Notes"), use Paragraph for text wrapping.
+            if key.lower().endswith("notes"):
+                cell_value = Paragraph(str(value), normal_style)
+            else:
+                cell_value = str(value)
+            table_data.append([key.replace("_", " ").title(), cell_value])
+
         table = Table(table_data, colWidths=[200, 250])
 
         # Add table styling
@@ -203,7 +217,6 @@ def gen_pdf(data: FormData):
         "Hitting Notes": data.hittingNotes
     })
 
-    # Add Pitching Mechanics Breakdown Section
     add_section("Pitching Mechanics Breakdown", {
         "Starting Position": data.startingPos,
         "Leg Lift + Initial Weight Shift": data.legLiftInitWeightShift,
@@ -261,8 +274,6 @@ def gen_pdf(data: FormData):
         "Pitching Notes": data.pitchingNotes,
     })
 
-    # Add pitching breakdown in the same format...
-
     # Build the PDF
     doc.build(elements)
 
@@ -276,7 +287,7 @@ def gen_pdf(data: FormData):
         headers={"Content-Disposition": "attachment; filename=athlete_report.pdf"}
     )
 
-# add comment test
+
 @app.get("/")
 def health_check():
-    return { "Server": "Healthy" }
+    return {"Server": "Healthy"}
