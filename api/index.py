@@ -36,6 +36,7 @@ class FormData(BaseModel):
     goodMorning: int
     lungeOverhead: int
     lateralTrunkTilt: int
+    mobilityNotes: str
 
     # Hitting Mechanics Breakdown
     weighShift: int
@@ -49,6 +50,7 @@ class FormData(BaseModel):
     shoulderConn: int
     barrelExt: int
     batShoulderAng: int
+    hittingNotes: str
 
     # Pitching Mechanics Breakdown
     startingPos: int
@@ -104,6 +106,7 @@ class FormData(BaseModel):
     overallRhythm: int
     propTimedIntent: int
     cervPos: int
+    pitchingNotes: str
 
 
 @app.post("/gen-pdf")
@@ -181,7 +184,8 @@ def gen_pdf(data: FormData):
         "Active Leg Raise": data.activeLegRaise,
         "Good Morning": data.goodMorning,
         "Lunge Overhead": data.lungeOverhead,
-        "Lateral Trunk Tilt": data.lateralTrunkTilt
+        "Lateral Trunk Tilt": data.lateralTrunkTilt,
+        "Mobility Notes": data.mobilityNotes
     })
 
     add_section("Hitting Mechanics Breakdown", {
@@ -195,7 +199,8 @@ def gen_pdf(data: FormData):
         "Front Arm Movement": data.frontArm,
         "Shoulder Connection": data.shoulderConn,
         "Barrel Extension": data.barrelExt,
-        "Bat Shoulder Angle": data.batShoulderAng
+        "Bat Shoulder Angle": data.batShoulderAng,
+        "Hitting Notes": data.hittingNotes
     })
 
     # Add Pitching Mechanics Breakdown Section
@@ -252,7 +257,8 @@ def gen_pdf(data: FormData):
         "Overall Tempo": data.overallTempo,
         "Overall Rhythm": data.overallRhythm,
         "Properly Timed Intent": data.propTimedIntent,
-        "Cervical Position": data.cervPos
+        "Cervical Position": data.cervPos,
+        "Pitching Notes": data.pitchingNotes,
     })
 
     # Add pitching breakdown in the same format...
