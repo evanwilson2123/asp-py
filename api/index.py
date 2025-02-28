@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -6,9 +6,15 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from io import BytesIO
+import pickle
+import pandas as pd
+import numpy as np
 
 app = FastAPI()
 
+######################
+# PDF GENERATION CODE
+######################
 
 # Define the Data Model (Matches TypeScript `FormData`)
 class FormData(BaseModel):
@@ -107,7 +113,6 @@ class FormData(BaseModel):
     propTimedIntent: int
     cervPos: int
     pitchingNotes: str
-
 
 @app.post("/gen-pdf")
 def gen_pdf(data: FormData):
@@ -287,7 +292,87 @@ def gen_pdf(data: FormData):
         headers={"Content-Disposition": "attachment; filename=athlete_report.pdf"}
     )
 
+##############################
+# STUFF+ CALCULATOR ENDPOINT
+##############################
 
+# Define a new Pydantic model for pitch data
+class PitchData(BaseModel):
+    Pitch_Type: str
+    RelSpeed: float
+    SpinRate: float
+    RelHeight: float
+    ABS_RelSide: float
+    Extension: float
+    # For non-fastball/sinker pitches:
+    ABS_Horizontal: float = None
+    InducedVertBreak: float = None
+    # For fastballs/sinkers, we can optionally pass differential_break.
+    differential_break: float = None
+
+# Load your pre-trained models (do this once on startup)
+rf_models = {
+    "Fastball": pickle.load(open('Models/rfc_modelfb.sav', 'rb')),
+    "Sinker": pickle.load(open('Models/rfc_modelfb.sav', 'rb')),
+    "Curveball": pickle.load(open('Models/rfc_modelcb.sav', 'rb')),
+    "Slider": pickle.load(open('Models/rfc_modelsl.sav', 'rb')),
+    "Cutter": pickle.load(open('Models/rfc_modelsl.sav', 'rb')),
+    "ChangeUp": pickle.load(open('Models/rfc_modelch.sav', 'rb'))
+}
+
+xgb_models = {
+    "Fastball": pickle.load(open('Models/xgb_modelfb.sav', 'rb')),
+    "Sinker": pickle.load(open('Models/xgb_modelfb.sav', 'rb')),
+    "Curveball": pickle.load(open('Models/xgb_modelcb.sav', 'rb')),
+    "Slider": pickle.load(open('Models/xgb_modelsl.sav', 'rb')),
+    "Cutter": pickle.load(open('Models/xgb_modelsl.sav', 'rb')),
+    "ChangeUp": pickle.load(open('Models/xgb_modelch.sav', 'rb'))
+}
+
+def calculate_stuff_plus(row: pd.Series):
+    pitch_type = row['Pitch_Type']
+    if pitch_type in rf_models:
+        rf_model = rf_models[pitch_type]
+        xgb_model = xgb_models[pitch_type]
+        if pitch_type in ['Fastball', 'Sinker']:
+            features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
+        else:
+            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
+        try:
+            row_features = row[features].values.reshape(1, -1)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Missing or invalid features: {e}")
+        xWhiff_rf = rf_model.predict_proba(row_features)[0][1]
+        xWhiff_xg = xgb_model.predict_proba(row_features)[0][1]
+        xWhiff = (xWhiff_rf + xWhiff_xg) / 2
+        if pitch_type in ['Fastball', 'Sinker']:
+            stuff_plus = (xWhiff / 0.18206374469443068) * 100
+        elif pitch_type in ['Curveball', 'KnuckleCurve']:
+            stuff_plus = (xWhiff / 0.30139757759674063) * 100
+        elif pitch_type in ['Slider', 'Cutter']:
+            stuff_plus = (xWhiff / 0.32823183402173944) * 100
+        elif pitch_type in ['ChangeUp']:
+            stuff_plus = (xWhiff / 0.32612872148563093) * 100
+        return stuff_plus
+    else:
+        raise HTTPException(status_code=400, detail="Invalid pitch type")
+
+@app.post("/calculate-stuff")
+def calculate_stuff_endpoint(pitch: PitchData):
+    data = pitch.dict()
+    # For Fastball/Sinker, compute differential_break if not provided.
+    if data["Pitch_Type"] in ["Fastball", "Sinker"]:
+        if data.get("differential_break") is None:
+            if data.get("ABS_Horizontal") is None or data.get("InducedVertBreak") is None:
+                raise HTTPException(status_code=400, detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break")
+            data["differential_break"] = abs(data["InducedVertBreak"] - data["ABS_Horizontal"])
+    row = pd.Series(data)
+    result = calculate_stuff_plus(row)
+    return {"stuff_plus": result}
+
+#################
+# HEALTH CHECK
+#################
 @app.get("/")
 def health_check():
     return {"Server": "Healthy"}
