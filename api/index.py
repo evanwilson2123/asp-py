@@ -321,12 +321,12 @@ rf_models = {
 }
 
 xgb_models = {
-    "Fastball": pickle.load(open('Models/xgb_modelfb.sav', 'rb')),
-    "Sinker": pickle.load(open('Models/xgb_modelfb.sav', 'rb')),
-    "Curveball": pickle.load(open('Models/xgb_modelcb.sav', 'rb')),
-    "Slider": pickle.load(open('Models/xgb_modelsl.sav', 'rb')),
-    "Cutter": pickle.load(open('Models/xgb_modelsl.sav', 'rb')),
-    "ChangeUp": pickle.load(open('Models/xgb_modelch.sav', 'rb'))
+    "Fastball": pickle.load(open('models/xgb_modelfb.sav', 'rb')),
+    "Sinker": pickle.load(open('models/xgb_modelfb.sav', 'rb')),
+    "Curveball": pickle.load(open('models/xgb_modelcb.sav', 'rb')),
+    "Slider": pickle.load(open('models/xgb_modelsl.sav', 'rb')),
+    "Cutter": pickle.load(open('models/xgb_modelsl.sav', 'rb')),
+    "ChangeUp": pickle.load(open('models/xgb_modelch.sav', 'rb'))
 }
 
 def calculate_stuff_plus(row: pd.Series):
