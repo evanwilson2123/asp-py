@@ -6,6 +6,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from io import BytesIO
+import requests
 import pickle
 import pandas as pd
 import numpy as np
@@ -113,6 +114,7 @@ class FormData(BaseModel):
     propTimedIntent: int
     cervPos: int
     pitchingNotes: str
+
 
 @app.post("/gen-pdf")
 def gen_pdf(data: FormData):
@@ -293,10 +295,50 @@ def gen_pdf(data: FormData):
     )
 
 ##############################
+# MODEL LOADING FROM VERCEL BLOB
+##############################
+
+def load_model_from_blob(url: str):
+    """Download a .sav file from Vercel Blob and unpickle it."""
+    resp = requests.get(url)
+    resp.raise_for_status()  # Raise HTTPError if download failed
+    return pickle.loads(resp.content)
+
+# -- Example URLs for your models on Vercel Blob --
+# Replace these with your actual public Blob URLs:
+RFC_MODELFB_URL = "https://your-base-url.vercel-storage.com/rfc_modelfb.sav"
+RFC_MODELCB_URL = "https://your-base-url.vercel-storage.com/rfc_modelcb.sav"
+RFC_MODELSL_URL = "https://your-base-url.vercel-storage.com/rfc_modelsl.sav"
+RFC_MODELCH_URL = "https://your-base-url.vercel-storage.com/rfc_modelch.sav"
+
+XGB_MODELFB_URL = "https://your-base-url.vercel-storage.com/xgb_modelfb.sav"
+XGB_MODELCB_URL = "https://your-base-url.vercel-storage.com/xgb_modelcb.sav"
+XGB_MODELSL_URL = "https://your-base-url.vercel-storage.com/xgb_modelsl.sav"
+XGB_MODELCH_URL = "https://your-base-url.vercel-storage.com/xgb_modelch.sav"
+
+# Load your models at startup (cold start in serverless)
+rf_models = {
+    "Fastball": load_model_from_blob(RFC_MODELFB_URL),
+    "Sinker":   load_model_from_blob(RFC_MODELFB_URL),
+    "Curveball": load_model_from_blob(RFC_MODELCB_URL),
+    "Slider":   load_model_from_blob(RFC_MODELSL_URL),
+    "Cutter":   load_model_from_blob(RFC_MODELSL_URL),
+    "ChangeUp": load_model_from_blob(RFC_MODELCH_URL)
+}
+
+xgb_models = {
+    "Fastball": load_model_from_blob(XGB_MODELFB_URL),
+    "Sinker":   load_model_from_blob(XGB_MODELFB_URL),
+    "Curveball": load_model_from_blob(XGB_MODELCB_URL),
+    "Slider":   load_model_from_blob(XGB_MODELSL_URL),
+    "Cutter":   load_model_from_blob(XGB_MODELSL_URL),
+    "ChangeUp": load_model_from_blob(XGB_MODELCH_URL)
+}
+
+##############################
 # STUFF+ CALCULATOR ENDPOINT
 ##############################
 
-# Define a new Pydantic model for pitch data
 class PitchData(BaseModel):
     Pitch_Type: str
     RelSpeed: float
@@ -310,41 +352,27 @@ class PitchData(BaseModel):
     # For fastballs/sinkers, we can optionally pass differential_break.
     differential_break: float = None
 
-# Load your pre-trained models (do this once on startup)
-rf_models = {
-    "Fastball": pickle.load(open('Models/rfc_modelfb.sav', 'rb')),
-    "Sinker": pickle.load(open('Models/rfc_modelfb.sav', 'rb')),
-    "Curveball": pickle.load(open('Models/rfc_modelcb.sav', 'rb')),
-    "Slider": pickle.load(open('Models/rfc_modelsl.sav', 'rb')),
-    "Cutter": pickle.load(open('Models/rfc_modelsl.sav', 'rb')),
-    "ChangeUp": pickle.load(open('Models/rfc_modelch.sav', 'rb'))
-}
-
-xgb_models = {
-    "Fastball": pickle.load(open('models/xgb_modelfb.sav', 'rb')),
-    "Sinker": pickle.load(open('models/xgb_modelfb.sav', 'rb')),
-    "Curveball": pickle.load(open('models/xgb_modelcb.sav', 'rb')),
-    "Slider": pickle.load(open('models/xgb_modelsl.sav', 'rb')),
-    "Cutter": pickle.load(open('models/xgb_modelsl.sav', 'rb')),
-    "ChangeUp": pickle.load(open('models/xgb_modelch.sav', 'rb'))
-}
-
 def calculate_stuff_plus(row: pd.Series):
     pitch_type = row['Pitch_Type']
     if pitch_type in rf_models:
         rf_model = rf_models[pitch_type]
         xgb_model = xgb_models[pitch_type]
+
+        # Features vary depending on pitch type
         if pitch_type in ['Fastball', 'Sinker']:
             features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
         else:
             features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
+
         try:
             row_features = row[features].values.reshape(1, -1)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Missing or invalid features: {e}")
+
         xWhiff_rf = rf_model.predict_proba(row_features)[0][1]
         xWhiff_xg = xgb_model.predict_proba(row_features)[0][1]
         xWhiff = (xWhiff_rf + xWhiff_xg) / 2
+
         if pitch_type in ['Fastball', 'Sinker']:
             stuff_plus = (xWhiff / 0.18206374469443068) * 100
         elif pitch_type in ['Curveball', 'KnuckleCurve']:
@@ -364,8 +392,12 @@ def calculate_stuff_endpoint(pitch: PitchData):
     if data["Pitch_Type"] in ["Fastball", "Sinker"]:
         if data.get("differential_break") is None:
             if data.get("ABS_Horizontal") is None or data.get("InducedVertBreak") is None:
-                raise HTTPException(status_code=400, detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break"
+                )
             data["differential_break"] = abs(data["InducedVertBreak"] - data["ABS_Horizontal"])
+
     row = pd.Series(data)
     result = calculate_stuff_plus(row)
     return {"stuff_plus": result}
