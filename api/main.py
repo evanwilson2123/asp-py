@@ -13,11 +13,10 @@ import numpy as np
 
 app = FastAPI()
 
-######################
+##############################
 # PDF GENERATION CODE
-######################
+##############################
 
-# Define the Data Model (Matches TypeScript `FormData`)
 class FormData(BaseModel):
     firstName: str
     lastName: str
@@ -33,7 +32,6 @@ class FormData(BaseModel):
     coachingStyle: str
     daysTraining: int
     priorSC: bool
-
     # Mobility Assessment
     overHeadSquat: int
     trunkStability: int
@@ -44,7 +42,6 @@ class FormData(BaseModel):
     lungeOverhead: int
     lateralTrunkTilt: int
     mobilityNotes: str
-
     # Hitting Mechanics Breakdown
     weighShift: int
     torsoRot: int
@@ -58,7 +55,6 @@ class FormData(BaseModel):
     barrelExt: int
     batShoulderAng: int
     hittingNotes: str
-
     # Pitching Mechanics Breakdown
     startingPos: int
     legLiftInitWeightShift: int
@@ -115,7 +111,6 @@ class FormData(BaseModel):
     cervPos: int
     pitchingNotes: str
 
-
 @app.post("/gen-pdf")
 def gen_pdf(data: FormData):
     buffer = BytesIO()
@@ -128,46 +123,30 @@ def gen_pdf(data: FormData):
         bottomMargin=1 * inch
     )
     elements = []
-
-    # Styles
     styles = getSampleStyleSheet()
     title_style = styles["Title"]
     subtitle_style = styles["Heading2"]
     normal_style = styles["Normal"]
-
-    # Custom Styles for section titles
     section_title_style = ParagraphStyle(
         "SectionTitle",
         parent=subtitle_style,
         spaceAfter=10,
         textColor=colors.white,
         backColor=colors.darkblue,
-        alignment=1,  # Centered
+        alignment=1,
         fontSize=14,
         leading=16
     )
-
-    # Title
     elements.append(Paragraph(f"Athlete Performance Report For {data.firstName} {data.lastName}", title_style))
     elements.append(Spacer(1, 12))
-
-    # Function to format sections
     def add_section(title, fields):
         elements.append(Paragraph(title, section_title_style))
         elements.append(Spacer(1, 6))
-
         table_data = []
         for key, value in fields.items():
-            # For fields with longer text (e.g., those ending with "Notes"), use Paragraph for text wrapping.
-            if key.lower().endswith("notes"):
-                cell_value = Paragraph(str(value), normal_style)
-            else:
-                cell_value = str(value)
+            cell_value = Paragraph(str(value), normal_style) if key.lower().endswith("notes") else str(value)
             table_data.append([key.replace("_", " ").title(), cell_value])
-
         table = Table(table_data, colWidths=[200, 250])
-
-        # Add table styling
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
@@ -177,11 +156,8 @@ def gen_pdf(data: FormData):
             ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
         ]))
-
         elements.append(table)
         elements.append(Spacer(1, 12))
-
-    # Add sections to the PDF
     add_section("General Information", {
         "Height": data.height,
         "Weight": f"{data.weight} lbs",
@@ -196,7 +172,6 @@ def gen_pdf(data: FormData):
         "Days Training per Week": data.daysTraining,
         "Prior Strength & Conditioning": "Yes" if data.priorSC else "No",
     })
-
     add_section("Mobility Assessment", {
         "Overhead Squat": data.overHeadSquat,
         "Trunk Stability": data.trunkStability,
@@ -208,7 +183,6 @@ def gen_pdf(data: FormData):
         "Lateral Trunk Tilt": data.lateralTrunkTilt,
         "Mobility Notes": data.mobilityNotes
     })
-
     add_section("Hitting Mechanics Breakdown", {
         "Weigh Shift": data.weighShift,
         "Torso Rotation": data.torsoRot,
@@ -223,7 +197,6 @@ def gen_pdf(data: FormData):
         "Bat Shoulder Angle": data.batShoulderAng,
         "Hitting Notes": data.hittingNotes
     })
-
     add_section("Pitching Mechanics Breakdown", {
         "Starting Position": data.startingPos,
         "Leg Lift + Initial Weight Shift": data.legLiftInitWeightShift,
@@ -280,14 +253,8 @@ def gen_pdf(data: FormData):
         "Cervical Position": data.cervPos,
         "Pitching Notes": data.pitchingNotes,
     })
-
-    # Build the PDF
     doc.build(elements)
-
-    # Move buffer position to the start
     buffer.seek(0)
-
-    # Return the PDF as a response
     return Response(
         content=buffer.getvalue(),
         media_type="application/pdf",
@@ -301,22 +268,21 @@ def gen_pdf(data: FormData):
 def load_model_from_blob(url: str):
     """Download a .sav file from Vercel Blob and unpickle it."""
     resp = requests.get(url)
-    resp.raise_for_status()  # Raise HTTPError if download failed
+    resp.raise_for_status()
     return pickle.loads(resp.content)
 
-# -- Example URLs for your models on Vercel Blob --
-# Replace these with your actual public Blob URLs:
-RFC_MODELFB_URL = "https://your-base-url.vercel-storage.com/rfc_modelfb.sav"
-RFC_MODELCB_URL = "https://your-base-url.vercel-storage.com/rfc_modelcb.sav"
-RFC_MODELSL_URL = "https://your-base-url.vercel-storage.com/rfc_modelsl.sav"
-RFC_MODELCH_URL = "https://your-base-url.vercel-storage.com/rfc_modelch.sav"
+# Replace these placeholders with your actual public Blob URLs.
+RFC_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelfb.sav"
+RFC_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelcb.sav"
+RFC_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelsl.sav"
+RFC_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelch.sav"
 
-XGB_MODELFB_URL = "https://your-base-url.vercel-storage.com/xgb_modelfb.sav"
-XGB_MODELCB_URL = "https://your-base-url.vercel-storage.com/xgb_modelcb.sav"
-XGB_MODELSL_URL = "https://your-base-url.vercel-storage.com/xgb_modelsl.sav"
-XGB_MODELCH_URL = "https://your-base-url.vercel-storage.com/xgb_modelch.sav"
+XGB_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelfb.sav"
+XGB_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelcb.sav"
+XGB_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelsl.sav"
+XGB_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelch.sav"
 
-# Load your models at startup (cold start in serverless)
+# Load models at startup (cold start)
 rf_models = {
     "Fastball": load_model_from_blob(RFC_MODELFB_URL),
     "Sinker":   load_model_from_blob(RFC_MODELFB_URL),
@@ -346,10 +312,8 @@ class PitchData(BaseModel):
     RelHeight: float
     ABS_RelSide: float
     Extension: float
-    # For non-fastball/sinker pitches:
     ABS_Horizontal: float = None
     InducedVertBreak: float = None
-    # For fastballs/sinkers, we can optionally pass differential_break.
     differential_break: float = None
 
 def calculate_stuff_plus(row: pd.Series):
@@ -357,38 +321,31 @@ def calculate_stuff_plus(row: pd.Series):
     if pitch_type in rf_models:
         rf_model = rf_models[pitch_type]
         xgb_model = xgb_models[pitch_type]
-
-        # Features vary depending on pitch type
         if pitch_type in ['Fastball', 'Sinker']:
             features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
         else:
             features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
-
         try:
             row_features = row[features].values.reshape(1, -1)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Missing or invalid features: {e}")
-
         xWhiff_rf = rf_model.predict_proba(row_features)[0][1]
         xWhiff_xg = xgb_model.predict_proba(row_features)[0][1]
         xWhiff = (xWhiff_rf + xWhiff_xg) / 2
-
         if pitch_type in ['Fastball', 'Sinker']:
-            stuff_plus = (xWhiff / 0.18206374469443068) * 100
+            return (xWhiff / 0.18206374469443068) * 100
         elif pitch_type in ['Curveball', 'KnuckleCurve']:
-            stuff_plus = (xWhiff / 0.30139757759674063) * 100
+            return (xWhiff / 0.30139757759674063) * 100
         elif pitch_type in ['Slider', 'Cutter']:
-            stuff_plus = (xWhiff / 0.32823183402173944) * 100
+            return (xWhiff / 0.32823183402173944) * 100
         elif pitch_type in ['ChangeUp']:
-            stuff_plus = (xWhiff / 0.32612872148563093) * 100
-        return stuff_plus
+            return (xWhiff / 0.32612872148563093) * 100
     else:
         raise HTTPException(status_code=400, detail="Invalid pitch type")
 
 @app.post("/calculate-stuff")
 def calculate_stuff_endpoint(pitch: PitchData):
     data = pitch.dict()
-    # For Fastball/Sinker, compute differential_break if not provided.
     if data["Pitch_Type"] in ["Fastball", "Sinker"]:
         if data.get("differential_break") is None:
             if data.get("ABS_Horizontal") is None or data.get("InducedVertBreak") is None:
@@ -397,14 +354,10 @@ def calculate_stuff_endpoint(pitch: PitchData):
                     detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break"
                 )
             data["differential_break"] = abs(data["InducedVertBreak"] - data["ABS_Horizontal"])
-
     row = pd.Series(data)
     result = calculate_stuff_plus(row)
     return {"stuff_plus": result}
 
-#################
-# HEALTH CHECK
-#################
 @app.get("/")
 def health_check():
     return {"Server": "Healthy"}
