@@ -272,15 +272,15 @@ def load_model_from_blob(url: str):
     return pickle.loads(resp.content)
 
 # Replace these placeholders with your actual public Blob URLs.
-RFC_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelfb.sav"
-RFC_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelcb.sav"
-RFC_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelsl.sav"
-RFC_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/rfc_modelch.sav"
+RFC_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelfb.sav"
+RFC_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelcb.sav"
+RFC_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelsl.sav"
+RFC_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelch.sav"
 
-XGB_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelfb.sav"
-XGB_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelcb.sav"
-XGB_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelsl.sav"
-XGB_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/xgb_modelch.sav"
+XGB_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelfb.sav"
+XGB_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelcb.sav"
+XGB_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelsl.sav"
+XGB_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelch.sav"
 
 # Load models at startup (cold start)
 rf_models = {
