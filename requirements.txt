@@ -1,8 +1,8 @@
-fastapi==0.95.1
-uvicorn==0.22.0
-reportlab==3.6.12
-pandas==1.5.3
-numpy==1.23.5
-xgboost==1.7.6
-scikit-learn==1.2.2
-requests==2.28.2
+fastapi
+uvicorn
+reportlab
+pandas
+numpy
+xgboost
+scikit-learn
+requests
