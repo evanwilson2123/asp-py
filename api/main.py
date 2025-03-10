@@ -360,6 +360,8 @@ def calculate_stuff_endpoint(pitch: PitchData):
     row = pd.Series(data)
     result = calculate_stuff_plus(row)
     return {"stuff_plus": result}
+# test
+
 
 @app.get("/")
 def health_check():
