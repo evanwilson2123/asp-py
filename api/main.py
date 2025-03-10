@@ -277,27 +277,45 @@ def gen_pdf(data: FormData):
 base_url = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/"
 try:
     print("Downloading models from remote storage...")
-    # Random Forest models
+    # Random Forest models - load each file only once
+    rf_modelfb = pickle.load(BytesIO(requests.get(base_url + "rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav").content))
+    rf_modelsl = pickle.load(BytesIO(requests.get(base_url + "rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav").content))
+    rf_modelcb = pickle.load(BytesIO(requests.get(base_url + "rfc_modelcb-qdhcUf9F7p8FRlGX14VQalFSMp2R9d.sav").content))
+    rf_modelch = pickle.load(BytesIO(requests.get(base_url + "rfc_modelch-H1OdfQtAHsX0sjKsFOd1pxIELU1b0G.sav").content))
+
     rf_models = {
-        "Fastball": pickle.load(BytesIO(requests.get(base_url + "rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav").content)),
-        "Sinker":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav").content)),
-        "Curveball": pickle.load(BytesIO(requests.get(base_url + "rfc_modelcb-qdhcUf9F7p8FRlGX14VQalFSMp2R9d.sav").content)),
-        "Slider":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav").content)),
-        "Cutter":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav").content)),
-        "ChangeUp": pickle.load(BytesIO(requests.get(base_url + "rfc_modelch-H1OdfQtAHsX0sjKsFOd1pxIELU1b0G.sav").content))
+        "Fastball": rf_modelfb,
+        "Sinker": rf_modelfb,
+        "Curveball": rf_modelcb,
+        "Slider": rf_modelsl,
+        "Cutter": rf_modelsl,
+        "ChangeUp": rf_modelch,
     }
+
     print("Downloading XGB models from remote storage...")
+    # XGB models - load each file only once
+    xgb_modelfb = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content))
+    xgb_modelsl = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content))
+    xgb_modelcb = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav").content))
+    xgb_modelch = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav").content))
+
     xgb_models = {
-        "Fastball": pickle.load(BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content)),
-        "Sinker":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content)),
-        "Curveball": pickle.load(BytesIO(requests.get(base_url + "xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav").content)),
-        "Slider":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content)),
-        "Cutter":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content)),
-        "ChangeUp": pickle.load(BytesIO(requests.get(base_url + "xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav").content))
+        "Fastball": xgb_modelfb,
+        "Sinker": xgb_modelfb,
+        "Curveball": xgb_modelcb,
+        "Slider": xgb_modelsl,
+        "Cutter": xgb_modelsl,
+        "ChangeUp": xgb_modelch,
     }
+
     print("Models loaded from remote storage.")
 except Exception as e:
     print(f"Error loading models from remote storage: {e}")
+
 
 ##############################
 # STUFF+ CALCULATOR ENDPOINT
