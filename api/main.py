@@ -1,17 +1,26 @@
 from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from reportlab.lib.pagesizes import letter
+from fastapi.middleware.cors import CORSMiddleware
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from io import BytesIO
-import requests
 import pickle
 import pandas as pd
 import numpy as np
+import requests  # New import for downloading files
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can restrict this to specific origins, e.g., ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 ##############################
 # PDF GENERATION CODE
@@ -262,44 +271,33 @@ def gen_pdf(data: FormData):
     )
 
 ##############################
-# MODEL LOADING FROM VERCEL BLOB
+# MODEL LOADING FROM REMOTE STORAGE
 ##############################
 
-def load_model_from_blob(url: str):
-    """Download a .sav file from Vercel Blob and unpickle it."""
-    resp = requests.get(url)
-    resp.raise_for_status()
-    return pickle.loads(resp.content)
-
-# Replace these placeholders with your actual public Blob URLs.
-RFC_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav"
-RFC_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelcb-qdhcUf9F7p8FRlGX14VQalFSMp2R9d.sav"
-RFC_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav"
-RFC_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/rfc_modelch-H1OdfQtAHsX0sjKsFOd1pxIELU1b0G.sav"
-
-XGB_MODELFB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav"
-XGB_MODELCB_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav"
-XGB_MODELSL_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav"
-XGB_MODELCH_URL = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav"
-
-# Load models at startup (cold start)
-rf_models = {
-    "Fastball": load_model_from_blob(RFC_MODELFB_URL),
-    "Sinker":   load_model_from_blob(RFC_MODELFB_URL),
-    "Curveball": load_model_from_blob(RFC_MODELCB_URL),
-    "Slider":   load_model_from_blob(RFC_MODELSL_URL),
-    "Cutter":   load_model_from_blob(RFC_MODELSL_URL),
-    "ChangeUp": load_model_from_blob(RFC_MODELCH_URL)
-}
-
-xgb_models = {
-    "Fastball": load_model_from_blob(XGB_MODELFB_URL),
-    "Sinker":   load_model_from_blob(XGB_MODELFB_URL),
-    "Curveball": load_model_from_blob(XGB_MODELCB_URL),
-    "Slider":   load_model_from_blob(XGB_MODELSL_URL),
-    "Cutter":   load_model_from_blob(XGB_MODELSL_URL),
-    "ChangeUp": load_model_from_blob(XGB_MODELCH_URL)
-}
+base_url = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/"
+try:
+    print("Downloading models from remote storage...")
+    # Random Forest models
+    rf_models = {
+        "Fastball": pickle.load(BytesIO(requests.get(base_url + "rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav").content)),
+        "Sinker":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelfb-pHfyNtcUetdII0zTjEgPpbm8Mouf9e.sav").content)),
+        "Curveball": pickle.load(BytesIO(requests.get(base_url + "rfc_modelcb-qdhcUf9F7p8FRlGX14VQalFSMp2R9d.sav").content)),
+        "Slider":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav").content)),
+        "Cutter":   pickle.load(BytesIO(requests.get(base_url + "rfc_modelsl-1H7J4VrTChpEXd0iSnUcmRolixx9yu.sav").content)),
+        "ChangeUp": pickle.load(BytesIO(requests.get(base_url + "rfc_modelch-H1OdfQtAHsX0sjKsFOd1pxIELU1b0G.sav").content))
+    }
+    print("Downloading XGB models from remote storage...")
+    xgb_models = {
+        "Fastball": pickle.load(BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content)),
+        "Sinker":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content)),
+        "Curveball": pickle.load(BytesIO(requests.get(base_url + "xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav").content)),
+        "Slider":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content)),
+        "Cutter":   pickle.load(BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content)),
+        "ChangeUp": pickle.load(BytesIO(requests.get(base_url + "xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav").content))
+    }
+    print("Models loaded from remote storage.")
+except Exception as e:
+    print(f"Error loading models from remote storage: {e}")
 
 ##############################
 # STUFF+ CALCULATOR ENDPOINT
@@ -333,18 +331,23 @@ def calculate_stuff_plus(row: pd.Series):
         xWhiff_xg = xgb_model.predict_proba(row_features)[0][1]
         xWhiff = (xWhiff_rf + xWhiff_xg) / 2
         if pitch_type in ['Fastball', 'Sinker']:
+            print((xWhiff / 0.18206374469443068) * 100)
             return (xWhiff / 0.18206374469443068) * 100
         elif pitch_type in ['Curveball', 'KnuckleCurve']:
+            print((xWhiff / 0.30139757759674063) * 100)
             return (xWhiff / 0.30139757759674063) * 100
         elif pitch_type in ['Slider', 'Cutter']:
+            print((xWhiff / 0.32823183402173944) * 100)
             return (xWhiff / 0.32823183402173944) * 100
         elif pitch_type in ['ChangeUp']:
+            print((xWhiff / 0.32612872148563093) * 100)
             return (xWhiff / 0.32612872148563093) * 100
     else:
         raise HTTPException(status_code=400, detail="Invalid pitch type")
 
 @app.post("/calculate-stuff")
 def calculate_stuff_endpoint(pitch: PitchData):
+    print("Endpoint hit")
     data = pitch.dict()
     if data["Pitch_Type"] in ["Fastball", "Sinker"]:
         if data.get("differential_break") is None:
@@ -360,4 +363,5 @@ def calculate_stuff_endpoint(pitch: PitchData):
 
 @app.get("/")
 def health_check():
+    print("Health checkpoint reached")
     return {"Server": "Healthy"}
