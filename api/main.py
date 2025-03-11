@@ -588,7 +588,8 @@ def generate_trackman_report(report_request: ReportData):
 
     # Output the PDF into a BytesIO buffer.
     buffer = BytesIO()
-    pdf.output(buffer)
+    pdf_data = pdf.output(dest='S').encode('latin-1')
+    buffer = BytesIO(pdf_data)
     buffer.seek(0)
 
     # Return the PDF as the response.
