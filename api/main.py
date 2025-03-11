@@ -114,9 +114,13 @@ def calculate_stuff_plus(row):
 
 def stuffappend(bullpen):
     bullpen['Stuff+'] = bullpen.apply(calculate_stuff_plus, axis=1)
-    # Limit DataFrame to key columns (using "Pitcher Name" as the renamed column)
-    bullpen = bullpen[['Pitcher Name', 'RelSpeed', 'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)', 'Extension', 'Stuff+']]
-    return bullpen
+    # Keep necessary columns including "Pitch Type" and "RelSide"
+    columns_to_keep = [
+        'Pitcher Name', 'Pitch Type', 'RelSide', 'RelSpeed',
+        'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)',
+        'Extension', 'Stuff+'
+    ]
+    return bullpen[columns_to_keep]
 
 def stuffhex(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
