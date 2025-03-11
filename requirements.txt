@@ -7,3 +7,6 @@ xgboost
 scikit-learn
 requests
 gunicorn
+matplotlib
+seaborn
+scipy
