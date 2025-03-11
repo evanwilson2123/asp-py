@@ -20,6 +20,11 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
 import requests  # For downloading models
+import os
+
+if not os.path.exists("Graphs"):
+    os.makedirs("Graphs")
+
 
 app = FastAPI()
 
