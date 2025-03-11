@@ -118,10 +118,8 @@ def calculate_stuff_plus(row):
 # Note: We update stuffappend so that it retains the columns needed for plotting (e.g., "Pitch Type" and "RelSide").
 def stuffappend(bullpen):
     bullpen['Stuff+'] = bullpen.apply(calculate_stuff_plus, axis=1)
-    # Retain all needed columns
-    cols = ['Pitcher Name', 'Pitch Type', 'RelSide', 'RelSpeed', 'SpinRate',
-            'InducedVertBreak', 'Horizontal Break (in)', 'Extension', 'Stuff+']
-    return bullpen[cols]
+    return bullpen
+
 
 
 def stuffhex(bullpen):
