@@ -1,0 +1,36 @@
+﻿pitch_release_speed_imp,Pitch Type,Pitcher Name,Release Height (ft),Release Side (ft),Extension (ft),Tilt,Measured Tilt,Gyro (°),Spin Efficiency (%),Induced Vertical Break (in),Horizontal Break (in),Vertical Approach Angle (°),Horizontal Approach Angle (°),Location Height (ft),Location Side (ft),Zone Location,session_id,Spin rate (rpm)
+86.9,Fastball,Cody Stashak,5.76,1.98,6.5,12:45,,16.28,96,20.1,7.7,-5.65,-2.3,2.07,-0.84,Out of Zone,,2086
+87.1,Fastball,Cody Stashak,5.81,1.97,6.4,12:45,,-0.24,100,20.5,8.3,-3.21,0.15,4.31,1.35,Out of Zone,,1977
+87.1,Fastball,Cody Stashak,5.74,2.09,6.4,12:45,,11.25,98,21.1,9.3,-2.45,-0.82,4.9,0.48,Out of Zone,,2084
+87.4,Fastball,Cody Stashak,5.68,2.24,6.8,12:45,,5.64,100,18.7,8.1,-3.45,-0.4,4.1,1.13,Out of Zone,,2138
+87.4,Fastball,Cody Stashak,5.79,1.72,6.8,12:45,,0,100,21.3,9.8,-4.28,-1.22,3.23,-0.3,Inner Zone,,2161
+88.5,Fastball,Cody Stashak,5.83,1.42,6.8,12:45,,0.65,100,23.4,9.6,-4.56,-0.25,2.73,0.31,Inner Zone,,2148
+88.5,Fastball,Cody Stashak,5.66,1.88,6.8,12:45,,0.87,100,18.6,8.5,-4.88,-1,2.67,0.18,Inner Zone,,2003
+88.6,Fastball,Cody Stashak,5.75,1.84,6.6,12:30,,1.75,100,21.2,6.7,-4.86,-0.98,2.56,0.33,Inner Zone,,2092
+88.6,Fastball,Cody Stashak,5.73,1.92,6.7,12:30,,10.34,98,21.3,6.8,-4.69,-1.68,2.68,-0.23,Inner Zone,,2207
+88.9,Fastball,Cody Stashak,5.63,1.97,6.7,12:45,,-0.55,100,18.8,8.9,-4.29,0.43,3.15,1.54,Out of Zone,,1989
+88.9,Fastball,Cody Stashak,5.85,1.83,6.8,12:30,,0.85,100,20.4,6,-4.73,-1.41,2.81,-0.01,Inner Zone,,1948
+89,Fastball,Cody Stashak,5.58,2,7.1,1:00,,1.6,100,17.9,9.1,-4.54,-1.63,2.94,-0.32,Inner Zone,,1975
+89.3,Fastball,Cody Stashak,5.74,1.48,6.8,12:45,,0.11,100,19.4,9.2,-4.32,-1.14,3.17,-0.41,Inner Zone,,1991
+89.4,Fastball,Cody Stashak,5.7,1.72,6.9,12:45,,12.65,98,19.5,8.8,-4.23,-2.32,3.18,-1.21,Out of Zone,,2184
+86,Cutter,Cody Stashak,5.63,2.04,6.9,12:30,,,,12,2.9,-6.45,-3.01,1.98,-0.97,Out of Zone,,2444
+86.4,Cutter,Cody Stashak,5.67,1.97,6.8,12:15,,,,9.8,1.1,-7.08,-4.33,1.59,-2.08,Out of Zone,,2300
+86.7,Cutter,Cody Stashak,5.7,1.84,6.8,12:30,,49.84,64,12.6,3.7,-7.45,-2.78,1.02,-1.04,Out of Zone,,2266
+86.8,Cutter,Cody Stashak,5.72,1.99,6.7,11:15,,,,9.8,-3.7,-7.13,-2.37,1.57,0.16,Out of Zone,,2368
+87.4,Cutter,Cody Stashak,5.64,1.99,6.8,12:30,,,,9.6,2.6,-6.84,-2.36,1.76,-0.41,Inner Zone,,2372
+87.5,Cutter,Cody Stashak,5.82,2.01,6.7,12:30,12:30,45.82,70,14.7,4.3,-4.47,-1.83,3.66,-0.06,Out of Zone,,2312
+87.8,Cutter,Cody Stashak,5.76,1.94,6.8,12:45,,,,14.6,5.9,-4.35,-1.14,3.68,0.36,Out of Zone,,2326
+87.8,Cutter,Cody Stashak,5.8,1.75,6.7,12:45,,50.63,63,12.4,4.2,-5.93,-2.09,2.46,-0.55,Inner Zone,,2306
+88,Cutter,Cody Stashak,5.73,1.63,6.8,12:45,12:00,47.8,67,12.4,4.6,-4.73,-2.33,3.48,-0.92,Out of Zone,,2403
+88.1,Cutter,Cody Stashak,5.83,1.74,6.9,12:45,,43.04,73,16.1,5.8,-5.06,-2.51,2.94,-1.07,Out of Zone,,2401
+82.6,ChangeUp,Cody Stashak,5.64,2.12,6.7,1:15,,18.71,95,12.5,10.5,-7.56,-1.03,1.19,0.22,Out of Zone,,1521
+83,ChangeUp,Cody Stashak,5.51,2.21,6.9,1:45,,,,10.7,14.2,-7.89,1.13,0.91,1.94,Out of Zone,,1466
+83.4,ChangeUp,Cody Stashak,5.66,2.21,6.8,1:45,,18.26,95,9.8,12.9,-8.72,-0.81,0.33,0.29,Out of Zone,,1484
+83.6,ChangeUp,Cody Stashak,5.68,1.9,7,1:45,,,,12.3,15.3,-8.02,-0.66,0.75,-0.11,Out of Zone,,1547
+85.3,ChangeUp,Cody Stashak,5.51,2.26,6.8,1:30,,16.18,96,12,12.6,-6.26,-1.06,2.07,0.13,Inner Zone,,1497
+76.1,Slider,Cody Stashak,6.03,1.93,6.1,9:15,,,,1.7,-15.5,-7.65,-3.78,3.22,-0.13,Inner Zone,,2246
+78.5,Slider,Cody Stashak,5.89,1.68,6.6,9:45,,,,4.6,-9.6,-8.38,-3.93,1.91,-1.03,Out of Zone,,2357
+79.4,Slider,Cody Stashak,5.74,1.93,6.2,9:00,,,,-0.7,-15.1,-8.65,-2.28,1.88,1.23,Out of Zone,,2373
+79.7,Slider,Cody Stashak,5.95,1.64,6.5,9:15,,,,2.4,-12.8,-7.13,-3.38,3.18,-0.27,Inner Zone,,2348
+81.1,Slider,Cody Stashak,5.84,1.57,6.3,9:45,,,,3.9,-11.5,-7.38,-2.78,2.62,0.07,Inner Zone,,2379
+81.5,Slider,Cody Stashak,5.86,1.52,6.4,,,,,7.6,-6.3,-8.1,-1.2,1.61,1.01,Out of Zone,,

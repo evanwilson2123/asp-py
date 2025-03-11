@@ -1,1 +1,2 @@
 *.sav filter=lfs diff=lfs merge=lfs -text
+DBs/college_data_with_stuff.csv filter=lfs diff=lfs merge=lfs -text
