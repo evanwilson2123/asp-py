@@ -543,14 +543,14 @@ def generate_trackman_report(report_request: ReportData):
                 box_height = 20
                 self.set_fill_color(3, 20, 55)
                 self.rect(box_x, box_y, box_width, box_height, style='F')
-                self.image('Graphs/Supplements Logo With Writing.png', x=box_x + 10, y=box_y + 2, w=60)
+                self.image('./Logos/logoWriting.png', x=box_x + 10, y=box_y + 2, w=60)
 
     pdf = PDFWithConditionalFooter('P', 'mm', 'A4')
     pagewidth = pdf.w
 
     # Page 1: Title Page
     pdf.add_page()
-    pdf.image('Graphs/Atlantic Sports Performance Logo.png', x=(pagewidth / 2) - 55, y=40, w=110)
+    pdf.image('./Logos/logo.png', x=(pagewidth / 2) - 55, y=40, w=110)
     pdf.set_font('Helvetica', 'B', 25)
     pdf.ln(150)
     pdf.cell(0, 15, 'TrackMan Pitching Report', 0, 1, align='C')
