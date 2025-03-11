@@ -285,14 +285,21 @@ def locationheatmap(bullpen):
     num_pitches = len(pitch_types)
     sz_left, sz_right = -1.0083333, 1.083333
     sz_top, sz_bottom = 4, 1
-    fig, axes = plt.subplots(1, num_pitches, figsize=(5 * num_pitches, 5))
-    axes = axes.flatten()
+    fig, axes = plt.subplots(1, num_pitches, figsize=(5*num_pitches, 5))
+    axes = np.atleast_1d(axes)  # Fix: ensure axes is array-like
     for i, pitch in enumerate(pitch_types):
         pitch_data = bullpen[bullpen['Pitch Type'] == pitch]
-        sns.kdeplot(data=pitch_data, x='Location Side (ft)', y='Location Height (ft)',
-                    fill=True, cmap='coolwarm', alpha=0.99, levels=100, ax=axes[i])
-        strikezone = patches.Rectangle((sz_left, sz_bottom), sz_right * 2, sz_top - sz_bottom,
-                                       linewidth=2, edgecolor='black', facecolor='none')
+        sns.kdeplot(
+            data=pitch_data,
+            x='Location Side (ft)',
+            y='Location Height (ft)',
+            fill=True, cmap='coolwarm',
+            alpha=0.99, levels=100, ax=axes[i]
+        )
+        strikezone = patches.Rectangle(
+            (sz_left, sz_bottom), sz_right*2, sz_top-sz_bottom,
+            linewidth=2, edgecolor='black', facecolor='none'
+        )
         axes[i].add_patch(strikezone)
         axes[i].set_facecolor('white')
         axes[i].set_title(f'{pitch}', fontsize=32)
@@ -311,6 +318,7 @@ def locationheatmap(bullpen):
     plt.tight_layout()
     plt.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
+
 
 
 def movementplot(bullpen):
