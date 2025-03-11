@@ -1,4 +1,6 @@
+import os
 import pickle
+import datetime
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
@@ -7,20 +9,14 @@ import pandas as pd
 import matplotlib.patches as patches
 import scipy
 from scipy import stats
+from fpdf import FPDF
 import sklearn
 import xgboost as xgb
-import datetime
 from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
 import requests  # For downloading models
-import os
 
 # Ensure the "Graphs" folder exists
 if not os.path.exists("Graphs"):
@@ -40,7 +36,7 @@ app.add_middleware(
 # GLOBALS & MODEL LOADING
 ##############################
 
-# Load CSVs for college averages and extra pitch data
+# Load CSVs for college averages and extra pitch data (these remain unchanged)
 filtered_pitchers = pd.read_csv('./DBs/filtered_pitchers.csv')  # College averages
 pitches_with_stuff = pd.read_csv('./DBs/college_data_with_stuff.csv')  # Extra college pitch data
 
@@ -51,7 +47,7 @@ pitch_colors = {
     'Sweeper': '#C29A00', 'Cutter': '#543000', 'Knuckleball': '#9B63E2'
 }
 
-# Load models from remote storage
+# Download models from remote storage
 base_url = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/"
 try:
     print("Downloading models from remote storage...")
@@ -70,10 +66,14 @@ try:
     }
 
     print("Downloading XGB models from remote storage...")
-    xgb_modelfb = pickle.load(BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content))
-    xgb_modelsl = pickle.load(BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content))
-    xgb_modelcb = pickle.load(BytesIO(requests.get(base_url + "xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav").content))
-    xgb_modelch = pickle.load(BytesIO(requests.get(base_url + "xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav").content))
+    xgb_modelfb = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelfb-rr3krkj30ylMQ9PxwU4sGIvsGOOKIN.sav").content))
+    xgb_modelsl = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelsl-fgqqdxQ3P1DzZiqmxv48LUB1C53IFt.sav").content))
+    xgb_modelcb = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelcb-DvGWFX5texrWl2ImDqKShKpSOb8YEh.sav").content))
+    xgb_modelch = pickle.load(
+        BytesIO(requests.get(base_url + "xgb_modelch-nQCeZmk7WtNKUsvlnFJ7cFQlrp9MSm.sav").content))
     xgb_models = {
         "Fastball": xgb_modelfb,
         "Sinker": xgb_modelfb,
@@ -85,6 +85,7 @@ try:
     print("Models loaded from remote storage.")
 except Exception as e:
     print(f"Error loading models from remote storage: {e}")
+
 
 ##############################
 # PLOTTING FUNCTIONS
@@ -98,7 +99,8 @@ def calculate_stuff_plus(row):
         if pitch_type in ['Fastball', 'Sinker']:
             features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
         else:
-            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
+            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension',
+                        'InducedVertBreak']
         row_features = row[features].values.reshape(1, -1)
         xWhiff_rf = rf_model.predict_proba(row_features)[0][1]
         xWhiff_xg = xgb_model.predict_proba(row_features)[0][1]
@@ -112,15 +114,15 @@ def calculate_stuff_plus(row):
         elif pitch_type in ['ChangeUp']:
             return (xWhiff / 0.32612872148563093) * 100
 
+
+# Note: We update stuffappend so that it retains the columns needed for plotting (e.g., "Pitch Type" and "RelSide").
 def stuffappend(bullpen):
     bullpen['Stuff+'] = bullpen.apply(calculate_stuff_plus, axis=1)
-    # Keep necessary columns including "Pitch Type" and "RelSide"
-    columns_to_keep = [
-        'Pitcher Name', 'Pitch Type', 'RelSide', 'RelSpeed',
-        'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)',
-        'Extension', 'Stuff+'
-    ]
-    return bullpen[columns_to_keep]
+    # Retain all needed columns
+    cols = ['Pitcher Name', 'Pitch Type', 'RelSide', 'RelSpeed', 'SpinRate',
+            'InducedVertBreak', 'Horizontal Break (in)', 'Extension', 'Stuff+']
+    return bullpen[cols]
+
 
 def stuffhex(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
@@ -128,13 +130,10 @@ def stuffhex(bullpen):
     fig, axes = plt.subplots(3, 2, figsize=(10, 15))
     axes = axes.flatten()
     fig.patch.set_facecolor('white')
-
-    # Base data selection based on handedness
     if bullpen['RelSide'].iloc[0] > 0:
         base_pitch_data = pitches_with_stuff[pitches_with_stuff['PitcherThrows'] == 'Right']
     else:
         base_pitch_data = pitches_with_stuff[pitches_with_stuff['PitcherThrows'] == 'Left']
-
     for idx, pitch in enumerate(pitch_types):
         pitch_data = base_pitch_data[base_pitch_data['Pitch Type'] == pitch]
         bullpen_pitches = bullpen[bullpen['Pitch Type'] == pitch]
@@ -152,7 +151,7 @@ def stuffhex(bullpen):
         pitch_data = pitch_data[
             (pitch_data['RelSpeed'] > bullpen_speed - 1) &
             (pitch_data['RelSpeed'] < bullpen_speed + 1)
-        ]
+            ]
         pitch_data['Horizontal Break (in)'] = pitch_data['Horizontal Break (in)'].clip(upper=25)
         pitch_data['InducedVertBreak'] = pitch_data['InducedVertBreak'].clip(upper=25)
         pitch_data = pitch_data[pitch_data['Horizontal Break (in)'].abs() + pitch_data['InducedVertBreak'].abs() < 30]
@@ -191,10 +190,15 @@ def stuffhex(bullpen):
     plt.savefig('Graphs/stuffhexmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
+
 def stuffplusgraph(bullpen):
-    sns.set_context("paper", font_scale=1.7, rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
+    # Ensure axes is an array, even if one subplot is returned.
+    if len(pitch_types) == 1:
+        axes = [axes]
     for i, pitch in enumerate(pitch_types):
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_stuff = diffpitches['Stuff+'].mean()
@@ -217,10 +221,14 @@ def stuffplusgraph(bullpen):
     fig.savefig('Graphs/stuff+_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
+
 def velograph(bullpen):
-    sns.set_context("paper", font_scale=1.7, rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
+    if len(pitch_types) == 1:
+        axes = [axes]
     for i, pitch in enumerate(pitch_types):
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_velo = diffpitches['RelSpeed'].mean()
@@ -242,10 +250,14 @@ def velograph(bullpen):
     fig.savefig('Graphs/velocity_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
+
 def spinrategraph(bullpen):
-    sns.set_context("paper", font_scale=1.7, rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
+    if len(pitch_types) == 1:
+        axes = [axes]
     for i, pitch in enumerate(pitch_types):
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_spin = diffpitches['SpinRate'].mean()
@@ -267,18 +279,19 @@ def spinrategraph(bullpen):
     fig.savefig('Graphs/spinrate_.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
+
 def locationheatmap(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
     num_pitches = len(pitch_types)
     sz_left, sz_right = -1.0083333, 1.083333
     sz_top, sz_bottom = 4, 1
-    fig, axes = plt.subplots(1, num_pitches, figsize=(5*num_pitches, 5))
+    fig, axes = plt.subplots(1, num_pitches, figsize=(5 * num_pitches, 5))
     axes = axes.flatten()
     for i, pitch in enumerate(pitch_types):
         pitch_data = bullpen[bullpen['Pitch Type'] == pitch]
         sns.kdeplot(data=pitch_data, x='Location Side (ft)', y='Location Height (ft)',
                     fill=True, cmap='coolwarm', alpha=0.99, levels=100, ax=axes[i])
-        strikezone = patches.Rectangle((sz_left, sz_bottom), sz_right*2, sz_top-sz_bottom,
+        strikezone = patches.Rectangle((sz_left, sz_bottom), sz_right * 2, sz_top - sz_bottom,
                                        linewidth=2, edgecolor='black', facecolor='none')
         axes[i].add_patch(strikezone)
         axes[i].set_facecolor('white')
@@ -299,8 +312,10 @@ def locationheatmap(bullpen):
     plt.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
+
 def movementplot(bullpen):
-    sns.scatterplot(data=bullpen, x="Horizontal Break (in)", y="InducedVertBreak", hue="Pitch Type", palette=pitch_colors)
+    sns.scatterplot(data=bullpen, x="Horizontal Break (in)", y="InducedVertBreak", hue="Pitch Type",
+                    palette=pitch_colors)
     fastball_index = bullpen[bullpen['Pitch Type'] == 'Fastball'].index[0]
     if bullpen.loc[fastball_index, 'RelSide'] > 0:
         compare = filtered_pitchers[filtered_pitchers['PitcherThrows'] == 'Right']
@@ -324,8 +339,9 @@ def movementplot(bullpen):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
     for spine in plt.gca().spines.values():
         spine.set_visible(False)
-    plt.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Graphs/movementplot', dpi=300, bbox_inches='tight')
     plt.close()
+
 
 def tableheatmap(bullpen):
     metrics_mapping = {
@@ -367,8 +383,9 @@ def tableheatmap(bullpen):
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
     plt.tight_layout()
-    plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
+    plt.savefig('Graphs/percentiletable', dpi=300, bbox_inches='tight')
     plt.close()
+
 
 def make_plots(bullpen):
     movementplot(bullpen)
@@ -378,6 +395,7 @@ def make_plots(bullpen):
     locationheatmap(bullpen)
     tableheatmap(bullpen)
     stuffhex(bullpen)
+
 
 ##############################
 # ENDPOINTS
@@ -395,6 +413,7 @@ class PitchData(BaseModel):
     InducedVertBreak: float = None
     differential_break: float = None
 
+
 def calculate_stuff_plus_endpoint(row: pd.Series):
     pitch_type = row['Pitch_Type']
     if pitch_type in rf_models:
@@ -403,7 +422,8 @@ def calculate_stuff_plus_endpoint(row: pd.Series):
         if pitch_type in ['Fastball', 'Sinker']:
             features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
         else:
-            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
+            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension',
+                        'InducedVertBreak']
         try:
             row_features = row[features].values.reshape(1, -1)
         except Exception as e:
@@ -422,17 +442,20 @@ def calculate_stuff_plus_endpoint(row: pd.Series):
     else:
         raise HTTPException(status_code=400, detail="Invalid pitch type")
 
+
 @app.post("/calculate-stuff")
 def calculate_stuff_endpoint(pitch: PitchData):
     data = pitch.dict()
     if data["Pitch_Type"] in ["Fastball", "Sinker"]:
         if data.get("differential_break") is None:
             if data.get("ABS_Horizontal") is None or data.get("InducedVertBreak") is None:
-                raise HTTPException(status_code=400, detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break")
+                raise HTTPException(status_code=400,
+                                    detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break")
             data["differential_break"] = abs(data["InducedVertBreak"] - data["ABS_Horizontal"])
     row = pd.Series(data)
     result = calculate_stuff_plus_endpoint(row)
     return {"stuff_plus": result}
+
 
 # Data model for generating the Trackman report
 class ReportData(BaseModel):
@@ -440,54 +463,41 @@ class ReportData(BaseModel):
     date_two: str
     athleteId: str
 
+
 @app.post("/generate-trackman-report")
 def generate_trackman_report(report_request: ReportData):
-    # 1. Fetch data from the Neon database using athleteId and date range.
-    athlete_id = report_request.athleteId
-    date_one = report_request.date_one  # e.g. "2023-01-01"
-    date_two = report_request.date_two  # e.g. "2023-01-31"
+    # 1. Convert dates and fetch data from the database using athleteId and date range.
     try:
-        start_date = datetime.datetime.fromisoformat(date_one)
-        end_date = datetime.datetime.fromisoformat(date_two)
+        start_date = datetime.datetime.fromisoformat(report_request.date_one)
+        end_date = datetime.datetime.fromisoformat(report_request.date_two)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {e}")
 
-    # --- Replace this pseudocode with your actual DB query ---
-    # For demonstration, we simulate a list of dictionaries as query result.
+    athlete_id = report_request.athleteId
+
+    # Replace this simulated query with your actual database query.
+    # The query should return records with fields matching the Prisma model:
+    # For demonstration, we simulate a list of dictionaries.
     db_data = [
         {
             "pitchReleaseSpeed": 92.5,
             "spinRate": 2200,
             "pitchType": "Fastball",
+            "pitcherName": "John Doe",
             "releaseHeight": 5.5,
             "releaseSide": -0.5,
             "extension": 6.0,
-            "horizontalBreak": 8.0,
             "inducedVerticalBreak": 12.0,
+            "horizontalBreak": 8.0,
             "locationSide": 0.3,
             "locationHeight": 2.1,
             "verticalApproachAngle": 30,
-            "createdAt": start_date,
-            "pitcherName": "John Doe"
+            "createdAt": start_date  # For demonstration; use actual createdAt from DB.
         },
-        {
-            "pitchReleaseSpeed": 92.5,
-            "spinRate": 2200,
-            "pitchType": "Fastball",
-            "releaseHeight": 5.5,
-            "releaseSide": -0.5,
-            "extension": 6.0,
-            "horizontalBreak": 8.0,
-            "inducedVerticalBreak": 12.0,
-            "locationSide": 0.3,
-            "locationHeight": 2.1,
-            "verticalApproachAngle": 30,
-            "createdAt": start_date,
-            "pitcherName": "John Doe"
-        }
-        # ... additional records ...
+        # ... additional records from the database ...
     ]
-    # 2. Convert data into DataFrame and map columns.
+
+    # 2. Convert the fetched data into a DataFrame and apply column mapping.
     trackman_df = pd.DataFrame(db_data)
     column_mapping = {
         'pitchReleaseSpeed': 'RelSpeed',
@@ -504,73 +514,85 @@ def generate_trackman_report(report_request: ReportData):
         'pitcherName': 'Pitcher Name'
     }
     trackman_df = trackman_df.rename(columns=column_mapping)
-    # 3. Compute extra columns for analysis.
+
+    # 3. Compute extra columns required for analysis.
     trackman_df['ABS_Horizontal'] = trackman_df['Horizontal Break (in)'].abs()
     trackman_df['ABS_RelSide'] = trackman_df['RelSide'].abs()
     trackman_df['differential_break'] = (trackman_df['InducedVertBreak'] - trackman_df['ABS_Horizontal']).abs()
 
-    # Compute Stuff+ column.
+    # Compute the Stuff+ column and keep required columns.
     trackman_df = stuffappend(trackman_df)
 
-    # 4. Generate plots (all graphs will be saved to the "Graphs" folder).
+    # 4. Generate plots (this will save all graphs into the "Graphs" folder).
     make_plots(trackman_df)
 
-    # 5. Build PDF report using ReportLab.
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=letter,
-        leftMargin=0.75 * inch,
-        rightMargin=0.75 * inch,
-        topMargin=1 * inch,
-        bottomMargin=1 * inch
-    )
-    elements = []
-    styles = getSampleStyleSheet()
-    title_style = styles["Title"]
-    subtitle_style = styles["Heading2"]
-    normal_style = styles["Normal"]
-    section_title_style = ParagraphStyle(
-        "SectionTitle",
-        parent=subtitle_style,
-        spaceAfter=10,
-        textColor="white",
-        backColor="darkblue",
-        alignment=1,
-        fontSize=14,
-        leading=16
-    )
+    # 5. Build the PDF report using FPDF exactly as in your original code.
+    class PDFWithConditionalFooter(FPDF):
+        # Create footer on every page except the first.
+        def footer(self):
+            if self.page_no() != 1:
+                box_x = 0
+                box_y = self.h - 20
+                box_width = self.w
+                box_height = 20
+                self.set_fill_color(3, 20, 55)
+                self.rect(box_x, box_y, box_width, box_height, style='F')
+                self.image('Graphs/Supplements Logo With Writing.png', x=box_x + 10, y=box_y + 2, w=60)
 
-    # Page 1: Title page.
-    elements.append(Paragraph("TrackMan Pitching Report", title_style))
-    elements.append(Spacer(1, 12))
-    # Use the renamed column "Pitcher Name" for the PDF.
+    pdf = PDFWithConditionalFooter('P', 'mm', 'A4')
+    pagewidth = pdf.w
+
+    # Page 1: Title Page
+    pdf.add_page()
+    pdf.image('Graphs/Atlantic Sports Performance Logo.png', x=(pagewidth / 2) - 55, y=40, w=110)
+    pdf.set_font('Helvetica', 'B', 25)
+    pdf.ln(150)
+    pdf.cell(0, 15, 'TrackMan Pitching Report', 0, 1, align='C')
+    pdf.set_font('Helvetica', 'B', 20)
     pitcher_name = trackman_df["Pitcher Name"].iloc[0] if "Pitcher Name" in trackman_df.columns else "Unknown"
-    elements.append(Paragraph(f"Pitcher: {pitcher_name}", subtitle_style))
-    elements.append(Spacer(1, 24))
+    pdf.cell(0, 5, f'Pitcher: {pitcher_name}', 0, 1, align='C')
 
-    # Page 2: Example graph page – Velocity Plot and Spin Rate Plot.
-    elements.append(Paragraph("Velocity Plot", section_title_style))
-    elements.append(Spacer(1, 12))
-    vel_image = Image("Graphs/velocity_plot.png", width=400, height=300)
-    elements.append(vel_image)
-    elements.append(Spacer(1, 24))
-    elements.append(Paragraph("Spin Rate Plot", section_title_style))
-    elements.append(Spacer(1, 12))
-    spin_image = Image("Graphs/spinrate_.png", width=400, height=300)
-    elements.append(spin_image)
-    elements.append(Spacer(1, 24))
-    # (Add additional pages/sections as needed to include other generated graphs)
+    # Page 2: Graphs – Velocity, Spin Rate, Stuff+, and Pitch Location
+    pitching_metrics_w = 170
+    pdf.add_page()
+    pdf.cell(5, 5, 'Velocity (MPH)', align='L')
+    pdf.image('Graphs/velocity_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=19.5, w=pitching_metrics_w)
+    pdf.ln(60)
+    pdf.cell(5, 5, 'Spin Rate (RPM)', align='L')
+    pdf.image('Graphs/spinrate_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=79.5, w=pitching_metrics_w)
+    pdf.ln(60)
+    pdf.cell(5, 5, 'Stuff+', align='L')
+    pdf.image('Graphs/stuff+_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=137.5, w=pitching_metrics_w)
+    pdf.ln(60)
+    pdf.cell(5, 5, 'Pitch Location', align='L')
+    pdf.image('Graphs/locationmap.png', x=(pagewidth - 200) / 2, y=197.5, w=200)
 
-    doc.build(elements)
+    # Page 3: Graphs – Movement Plot and Percentile Table
+    pdf.add_page()
+    pdf.cell(5, 5, 'Pitch Movement (in)', align='L')
+    pdf.image('Graphs/movementplot.png', x=(pagewidth - 200) / 2, y=17.5, w=200)
+    pdf.ln(160)
+    pdf.cell(5, 5, 'Movement Stats', align='L')
+    pdf.image('Graphs/percentiletable.png', x=(pagewidth - 200) / 2, y=180, w=200)
+
+    # Page 4: Graph – Stuff+ Blob
+    pdf.add_page()
+    pdf.cell(5, 5, 'Your Stuff+ vs Pitches with Similar Velo', align='L')
+    pdf.image('Graphs/stuffhexmap.png', x=(pagewidth - 200) / 2, y=17.5, w=200)
+
+    # Output the PDF into a BytesIO buffer.
+    buffer = BytesIO()
+    pdf.output(buffer)
     buffer.seek(0)
+
+    # Return the PDF as the response.
     return Response(
         content=buffer.getvalue(),
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=trackman_report.pdf"}
     )
 
+
 @app.get("/")
 def health_check():
-    print("Health checkpoint reached")
     return {"Server": "Healthy"}

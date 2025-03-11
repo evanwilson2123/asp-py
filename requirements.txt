@@ -10,3 +10,4 @@ gunicorn
 matplotlib
 seaborn
 scipy
+fpdf
