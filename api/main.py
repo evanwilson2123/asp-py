@@ -22,9 +22,9 @@ from io import BytesIO
 import requests  # For downloading models
 import os
 
+# Ensure the "Graphs" folder exists
 if not os.path.exists("Graphs"):
     os.makedirs("Graphs")
-
 
 app = FastAPI()
 
@@ -40,10 +40,9 @@ app.add_middleware(
 # GLOBALS & MODEL LOADING
 ##############################
 
-# For plotting we still require the college average data and extra data.
-# These CSVs remain unchanged.
+# Load CSVs for college averages and extra pitch data
 filtered_pitchers = pd.read_csv('./DBs/filtered_pitchers.csv')  # College averages
-pitches_with_stuff = pd.read_csv('./DBs/college_data_with_stuff.csv')  # Full college data w/ extra info
+pitches_with_stuff = pd.read_csv('./DBs/college_data_with_stuff.csv')  # Extra college pitch data
 
 # Colors for pitchers
 pitch_colors = {
@@ -115,8 +114,8 @@ def calculate_stuff_plus(row):
 
 def stuffappend(bullpen):
     bullpen['Stuff+'] = bullpen.apply(calculate_stuff_plus, axis=1)
-    # Limit DataFrame to key columns (as in original code)
-    bullpen = bullpen[['Pitcher Name','RelSpeed', 'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)', 'Extension','Stuff+']]
+    # Limit DataFrame to key columns (using "Pitcher Name" as the renamed column)
+    bullpen = bullpen[['Pitcher Name', 'RelSpeed', 'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)', 'Extension', 'Stuff+']]
     return bullpen
 
 def stuffhex(bullpen):
@@ -469,7 +468,7 @@ def generate_trackman_report(report_request: ReportData):
         },
         # ... additional records ...
     ]
-    # 2. Convert data into DataFrame and map columns
+    # 2. Convert data into DataFrame and map columns.
     trackman_df = pd.DataFrame(db_data)
     column_mapping = {
         'pitchReleaseSpeed': 'RelSpeed',
@@ -482,18 +481,22 @@ def generate_trackman_report(report_request: ReportData):
         'inducedVerticalBreak': 'InducedVertBreak',
         'locationSide': 'Location Side (ft)',
         'locationHeight': 'Location Height (ft)',
-        'verticalApproachAngle': 'Vertical Approach Angle (°)'
+        'verticalApproachAngle': 'Vertical Approach Angle (°)',
+        'pitcherName': 'Pitcher Name'
     }
     trackman_df = trackman_df.rename(columns=column_mapping)
-    # 3. Compute extra columns for analysis
+    # 3. Compute extra columns for analysis.
     trackman_df['ABS_Horizontal'] = trackman_df['Horizontal Break (in)'].abs()
     trackman_df['ABS_RelSide'] = trackman_df['RelSide'].abs()
     trackman_df['differential_break'] = (trackman_df['InducedVertBreak'] - trackman_df['ABS_Horizontal']).abs()
 
-    # 4. Generate plots (all graphs will be saved to the "Graphs" folder)
+    # Compute Stuff+ column.
+    trackman_df = stuffappend(trackman_df)
+
+    # 4. Generate plots (all graphs will be saved to the "Graphs" folder).
     make_plots(trackman_df)
 
-    # 5. Build PDF report using ReportLab
+    # 5. Build PDF report using ReportLab.
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -519,14 +522,15 @@ def generate_trackman_report(report_request: ReportData):
         leading=16
     )
 
-    # Page 1: Title page
+    # Page 1: Title page.
     elements.append(Paragraph("TrackMan Pitching Report", title_style))
     elements.append(Spacer(1, 12))
-    pitcher_name = trackman_df["pitcherName"].iloc[0] if "pitcherName" in trackman_df.columns else "Unknown"
+    # Use the renamed column "Pitcher Name" for the PDF.
+    pitcher_name = trackman_df["Pitcher Name"].iloc[0] if "Pitcher Name" in trackman_df.columns else "Unknown"
     elements.append(Paragraph(f"Pitcher: {pitcher_name}", subtitle_style))
     elements.append(Spacer(1, 24))
 
-    # Page 2: Example graph page – Velocity Plot and Spin Rate Plot
+    # Page 2: Example graph page – Velocity Plot and Spin Rate Plot.
     elements.append(Paragraph("Velocity Plot", section_title_style))
     elements.append(Spacer(1, 12))
     vel_image = Image("Graphs/velocity_plot.png", width=400, height=300)
