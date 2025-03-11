@@ -274,7 +274,7 @@ def spinrategraph(bullpen):
     axes[-1].set_xlabel('')
     plt.subplots_adjust(hspace=0.01)
     plt.xlim(min(bullpen['SpinRate'] - 30), max(bullpen['SpinRate']) + 20)
-    fig.savefig('Graphs/spinrate_.png', bbox_inches='tight', dpi=300, format='png')
+    fig.savefig('Graphs/spinrate_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
 
