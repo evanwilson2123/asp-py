@@ -470,6 +470,21 @@ def generate_trackman_report(report_request: ReportData):
             "createdAt": start_date,
             "pitcherName": "John Doe"
         },
+        {
+            "pitchReleaseSpeed": 92.5,
+            "spinRate": 2200,
+            "pitchType": "Fastball",
+            "releaseHeight": 5.5,
+            "releaseSide": -0.5,
+            "extension": 6.0,
+            "horizontalBreak": 8.0,
+            "inducedVerticalBreak": 12.0,
+            "locationSide": 0.3,
+            "locationHeight": 2.1,
+            "verticalApproachAngle": 30,
+            "createdAt": start_date,
+            "pitcherName": "John Doe"
+        }
         # ... additional records ...
     ]
     # 2. Convert data into DataFrame and map columns.
