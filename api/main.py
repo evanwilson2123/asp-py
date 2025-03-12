@@ -527,24 +527,10 @@ def generate_trackman_report(report_request: ReportData):
     # Replace this simulated query with your actual database query.
     # The query should return records with fields matching the Prisma model:
     # For demonstration, we simulate a list of dictionaries.
-    db_data = [
-        {
-            "pitchReleaseSpeed": 92.5,
-            "spinRate": 2200,
-            "pitchType": "Fastball",
-            "pitcherName": "John Doe",
-            "releaseHeight": 5.5,
-            "releaseSide": -0.5,
-            "extension": 6.0,
-            "inducedVerticalBreak": 12.0,
-            "horizontalBreak": 8.0,
-            "locationSide": 0.3,
-            "locationHeight": 2.1,
-            "verticalApproachAngle": 30,
-            "createdAt": start_date  # For demonstration; use actual createdAt from DB.
-        },
-        # ... additional records from the database ...
-    ]
+    db_data = query_trackman_data(athlete_id, start_date, end_date)
+
+    if not db_data:
+        raise HTTPException(status_code=404, detail="No Trackman data found")
 
     # 2. Convert the fetched data into a DataFrame and apply column mapping.
     trackman_df = pd.DataFrame(db_data)
