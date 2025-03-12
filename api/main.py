@@ -56,6 +56,22 @@ pitch_colors = {
     'Sweeper': '#C29A00', 'Cutter': '#543000', 'Knuckleball': '#9B63E2'
 }
 
+metrics = [
+    'RelSpeed', 'SpinRate', 'InducedVertBreak', 'Horizontal Break (in)',
+    'Extension', 'Vertical Approach Angle (°)', 'RelHeight', 'Stuff+'
+]
+
+# Create a global dictionary to store precomputed values
+COLLEGE_VALUES = {}
+
+# Loop through each unique pitch type in the CSV and precompute the arrays
+for pitch in filtered_pitchers['Pitch Type'].unique():
+    COLLEGE_VALUES[pitch] = {}
+    for metric in metrics:
+        # We drop NA and take the absolute value as done in the original code.
+        values = filtered_pitchers[filtered_pitchers['Pitch Type'] == pitch][metric].dropna().abs().values
+        COLLEGE_VALUES[pitch][metric] = values
+
 # Download models from remote storage
 base_url = "https://iqpjsciijbncme4r.public.blob.vercel-storage.com/models/"
 try:
@@ -358,6 +374,48 @@ def movementplot(bullpen):
     plt.close()
 
 
+# def tableheatmap(bullpen):
+#     metrics_mapping = {
+#         'RelSpeed': 'Velocity',
+#         'SpinRate': 'Spin Rate',
+#         'InducedVertBreak': 'IVB',
+#         'Horizontal Break (in)': 'HB',
+#         'Extension': 'Extension',
+#         'Vertical Approach Angle (°)': 'VAA',
+#         'RelHeight': 'Release Height',
+#         'Stuff+': 'Stuff+'
+#     }
+#     invert_metrics = ['Vertical Approach Angle (°)', 'RelHeight']
+#     metrics = list(metrics_mapping.keys())
+#     display_names = list(metrics_mapping.values())
+#     actual_values = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
+#     percentile_data = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
+#     for pitch_type in bullpen['Pitch Type'].unique():
+#         for metric in metrics:
+#             actual_value = bullpen[bullpen['Pitch Type'] == pitch_type][metric].mean()
+#             actual_values.loc[pitch_type, metric] = float(actual_value)
+#             college_values = filtered_pitchers[filtered_pitchers['Pitch Type'] == pitch_type][metric].dropna()
+#             if len(college_values) > 0:
+#                 if metric in invert_metrics:
+#                     percentile = 100 - stats.percentileofscore(college_values.abs(), abs(actual_value))
+#                 else:
+#                     percentile = stats.percentileofscore(college_values.abs(), abs(actual_value))
+#                 percentile_data.loc[pitch_type, metric] = float(percentile)
+#             else:
+#                 percentile_data.loc[pitch_type, metric] = 50.0
+#     actual_values.columns = display_names
+#     percentile_data.columns = display_names
+#     plt.figure(figsize=(14, 3))
+#     heatmap = sns.heatmap(data=percentile_data, annot=actual_values.round(1), fmt='.1f',
+#                           cmap='coolwarm', center=50, vmin=0, vmax=100, cbar_kws={'label': 'Percentile'})
+#     heatmap.xaxis.set_label_position('top')
+#     heatmap.xaxis.set_ticks_position('top')
+#     plt.tick_params(axis='both', which='both', length=0)
+#     plt.xticks(rotation=0)
+#     plt.yticks(rotation=0)
+#     plt.tight_layout()
+#     plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
+#     plt.close()
 def tableheatmap(bullpen):
     metrics_mapping = {
         'RelSpeed': 'Velocity',
@@ -374,19 +432,22 @@ def tableheatmap(bullpen):
     display_names = list(metrics_mapping.values())
     actual_values = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
     percentile_data = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
+
     for pitch_type in bullpen['Pitch Type'].unique():
         for metric in metrics:
             actual_value = bullpen[bullpen['Pitch Type'] == pitch_type][metric].mean()
             actual_values.loc[pitch_type, metric] = float(actual_value)
-            college_values = filtered_pitchers[filtered_pitchers['Pitch Type'] == pitch_type][metric].dropna()
-            if len(college_values) > 0:
+            # Get precomputed college values from the dictionary
+            college_vals = COLLEGE_VALUES.get(pitch_type, {}).get(metric, np.array([]))
+            if len(college_vals) > 0:
                 if metric in invert_metrics:
-                    percentile = 100 - stats.percentileofscore(college_values.abs(), abs(actual_value))
+                    percentile = 100 - stats.percentileofscore(college_vals, abs(actual_value))
                 else:
-                    percentile = stats.percentileofscore(college_values.abs(), abs(actual_value))
+                    percentile = stats.percentileofscore(college_vals, abs(actual_value))
                 percentile_data.loc[pitch_type, metric] = float(percentile)
             else:
                 percentile_data.loc[pitch_type, metric] = 50.0
+
     actual_values.columns = display_names
     percentile_data.columns = display_names
     plt.figure(figsize=(14, 3))
@@ -400,6 +461,7 @@ def tableheatmap(bullpen):
     plt.tight_layout()
     plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
     plt.close()
+
 
 
 def make_plots(bullpen):
