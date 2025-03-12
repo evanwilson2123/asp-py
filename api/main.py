@@ -1,6 +1,8 @@
 import os
 import pickle
 import datetime
+import matplotlib
+matplotlib.use('Agg')  # Use a non-interactive backend for faster rendering
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
@@ -20,6 +22,7 @@ import requests  # For downloading models
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor  # For parallel plotting
 
 load_dotenv()  # Load variables from .env
 
@@ -109,7 +112,7 @@ except Exception as e:
 ##############################
 
 def calculate_stuff_plus(row):
-    # This function is now superseded by the vectorized version.
+    # (Legacy; not used in the vectorized approach)
     pitch_type = row['Pitch Type']
     if pitch_type in rf_models:
         rf_model = rf_models[pitch_type]
@@ -132,9 +135,8 @@ def calculate_stuff_plus(row):
         elif pitch_type in ['ChangeUp']:
             return (xWhiff / 0.32612872148563093) * 100
 
-# Optimized vectorized version of stuffappend.
+# Optimized vectorized version of stuffappend using batch model predictions.
 def stuffappend(bullpen):
-    # Group by pitch type so that we can perform batch predictions.
     grouped = bullpen.groupby('Pitch Type')
     for pitch_type, group in grouped:
         if pitch_type not in rf_models:
@@ -143,8 +145,7 @@ def stuffappend(bullpen):
             features = ['RelSpeed', 'SpinRate', 'differential_break', 'RelHeight', 'ABS_RelSide', 'Extension']
             denom = 0.18206374469443068
         else:
-            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension',
-                        'InducedVertBreak']
+            features = ['RelSpeed', 'SpinRate', 'ABS_Horizontal', 'RelHeight', 'ABS_RelSide', 'Extension', 'InducedVertBreak']
             if pitch_type in ['Curveball', 'KnuckleCurve']:
                 denom = 0.30139757759674063
             elif pitch_type in ['Slider', 'Cutter']:
@@ -154,7 +155,6 @@ def stuffappend(bullpen):
         X = group[features].values
         rf_model = rf_models[pitch_type]
         xgb_model = xgb_models[pitch_type]
-        # Use batch predictions
         xWhiff_rf = rf_model.predict_proba(X)[:, 1]
         xWhiff_xg = xgb_model.predict_proba(X)[:, 1]
         xWhiff = (xWhiff_rf + xWhiff_xg) / 2
@@ -162,7 +162,7 @@ def stuffappend(bullpen):
         bullpen.loc[group.index, 'Stuff+'] = stuff_values
     return bullpen
 
-# (The plotting functions below remain unchanged.)
+# The plotting functions remain unchanged.
 def stuffhex(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
     plt.style.use('default')
@@ -229,7 +229,6 @@ def stuffhex(bullpen):
     plt.savefig('Graphs/stuffhexmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-
 def stuffplusgraph(bullpen):
     sns.set_context("paper", font_scale=1.7,
                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
@@ -259,7 +258,6 @@ def stuffplusgraph(bullpen):
     fig.savefig('Graphs/stuff+_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
-
 def velograph(bullpen):
     sns.set_context("paper", font_scale=1.7,
                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
@@ -288,7 +286,6 @@ def velograph(bullpen):
     fig.savefig('Graphs/velocity_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
-
 def spinrategraph(bullpen):
     sns.set_context("paper", font_scale=1.7,
                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
@@ -316,7 +313,6 @@ def spinrategraph(bullpen):
     plt.xlim(min(bullpen['SpinRate'] - 30), max(bullpen['SpinRate']) + 20)
     fig.savefig('Graphs/spinrate_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
-
 
 def locationheatmap(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
@@ -355,7 +351,6 @@ def locationheatmap(bullpen):
     plt.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-
 def movementplot(bullpen):
     sns.scatterplot(data=bullpen, x="Horizontal Break (in)", y="InducedVertBreak", hue="Pitch Type",
                     palette=pitch_colors)
@@ -384,7 +379,6 @@ def movementplot(bullpen):
         spine.set_visible(False)
     plt.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
     plt.close()
-
 
 def tableheatmap(bullpen):
     metrics_mapping = {
@@ -431,15 +425,13 @@ def tableheatmap(bullpen):
     plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-
+# Use ThreadPoolExecutor to run the independent plotting functions concurrently.
 def make_plots(bullpen):
-    movementplot(bullpen)
-    stuffplusgraph(bullpen)
-    velograph(bullpen)
-    spinrategraph(bullpen)
-    locationheatmap(bullpen)
-    tableheatmap(bullpen)
-    stuffhex(bullpen)
+    plot_funcs = [movementplot, stuffplusgraph, velograph, spinrategraph, locationheatmap, tableheatmap, stuffhex]
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(func, bullpen.copy()) for func in plot_funcs]
+        for future in futures:
+            future.result()
 
 ##############################
 # ENDPOINTS
