@@ -354,7 +354,7 @@ def movementplot(bullpen):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
     for spine in plt.gca().spines.values():
         spine.set_visible(False)
-    plt.savefig('Graphs/movementplot', dpi=300, bbox_inches='tight')
+    plt.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
     plt.close()
 
 
@@ -398,7 +398,7 @@ def tableheatmap(bullpen):
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
     plt.tight_layout()
-    plt.savefig('Graphs/percentiletable', dpi=300, bbox_inches='tight')
+    plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
     plt.close()
 
 
