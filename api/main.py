@@ -480,7 +480,7 @@ def query_trackman_data(athlete_id, start_date, end_date):
         locationHeight,
         verticalApproachAngle,
         createdAt
-    FROM Trackman
+    FROM "Trackman"
     WHERE athleteId = %s
       AND createdAt BETWEEN %s AND %s
     ORDER BY createdAt ASC;
