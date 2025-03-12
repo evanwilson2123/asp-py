@@ -20,6 +20,7 @@ import requests  # For downloading models
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()  # Load variables from .env
 
@@ -432,14 +433,32 @@ def tableheatmap(bullpen):
     plt.close()
 
 
+# def make_plots(bullpen):
+#     movementplot(bullpen)
+#     stuffplusgraph(bullpen)
+#     velograph(bullpen)
+#     spinrategraph(bullpen)
+#     locationheatmap(bullpen)
+#     tableheatmap(bullpen)
+#     stuffhex(bullpen)
 def make_plots(bullpen):
-    movementplot(bullpen)
-    stuffplusgraph(bullpen)
-    velograph(bullpen)
-    spinrategraph(bullpen)
-    locationheatmap(bullpen)
-    tableheatmap(bullpen)
-    stuffhex(bullpen)
+    # List all plotting functions you want to run concurrently.
+    plot_funcs = [
+        movementplot,
+        stuffplusgraph,
+        velograph,
+        spinrategraph,
+        locationheatmap,
+        tableheatmap,
+        stuffhex
+    ]
+    # Use ThreadPoolExecutor to run each plotting function concurrently.
+    with ThreadPoolExecutor() as executor:
+        # Submit each function with a copy of the DataFrame to ensure thread safety.
+        futures = [executor.submit(func, bullpen.copy()) for func in plot_funcs]
+        # Wait for all plotting functions to complete.
+        for future in futures:
+            future.result()
 
 ##############################
 # ENDPOINTS
