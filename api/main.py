@@ -484,6 +484,164 @@ def calculate_stuff_plus_endpoint(row: pd.Series):
     else:
         raise HTTPException(status_code=400, detail="Invalid pitch type")
 
+# def query_trackman_data(athlete_id, start_date, end_date):
+#     connection_string = os.environ.get("NEON_DB_CONNECTION")
+#     if not connection_string:
+#         raise ValueError("NEON_DB_CONNECTION is not set!")
+#     conn = psycopg2.connect(connection_string)
+#     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+#     query = """
+#     SELECT
+#         "pitchReleaseSpeed",
+#         "spinRate",
+#         "pitchType",
+#         "pitcherName",
+#         "releaseHeight",
+#         "releaseSide",
+#         "extension",
+#         "inducedVerticalBreak",
+#         "horizontalBreak",
+#         "locationSide",
+#         "locationHeight",
+#         "verticalApproachAngle",
+#         "createdAt",
+#         "stuffPlus"
+#     FROM "Trackman"
+#     WHERE "athleteId" = %s
+#       AND "createdAt" BETWEEN %s AND %s
+#     ORDER BY "createdAt" ASC;
+#     """
+#     cursor.execute(query, (athlete_id, start_date, end_date))
+#     rows = cursor.fetchall()
+#     cursor.close()
+#     conn.close()
+#     return rows
+#
+# @app.post("/calculate-stuff")
+# def calculate_stuff_endpoint(pitch: PitchData):
+#     data = pitch.dict()
+#     if data["Pitch_Type"] in ["Fastball", "Sinker"]:
+#         if data.get("differential_break") is None:
+#             if data.get("ABS_Horizontal") is None or data.get("InducedVertBreak") is None:
+#                 raise HTTPException(status_code=400,
+#                                     detail="Missing ABS_Horizontal or InducedVertBreak to compute differential_break")
+#             data["differential_break"] = abs(data["InducedVertBreak"] - data["ABS_Horizontal"])
+#     row = pd.Series(data)
+#     result = calculate_stuff_plus_endpoint(row)
+#     return {"stuff_plus": result}
+#
+# class ReportData(BaseModel):
+#     date_one: str
+#     date_two: str
+#     athleteId: str
+#
+# @app.post("/generate-trackman-report")
+# def generate_trackman_report(report_request: ReportData):
+#     try:
+#         start_date = datetime.datetime.fromisoformat(report_request.date_one)
+#         end_date = datetime.datetime.fromisoformat(report_request.date_two)
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=f"Invalid date format: {e}")
+#
+#     athlete_id = report_request.athleteId
+#     db_data = query_trackman_data(athlete_id, start_date, end_date)
+#     if not db_data:
+#         raise HTTPException(status_code=404, detail="No Trackman data found")
+#
+#     trackman_df = pd.DataFrame(db_data)
+#     column_mapping = {
+#         'pitchReleaseSpeed': 'RelSpeed',
+#         'spinRate': 'SpinRate',
+#         'pitchType': 'Pitch Type',
+#         'releaseHeight': 'RelHeight',
+#         'releaseSide': 'RelSide',
+#         'extension': 'Extension',
+#         'horizontalBreak': 'Horizontal Break (in)',
+#         'inducedVerticalBreak': 'InducedVertBreak',
+#         'locationSide': 'Location Side (ft)',
+#         'locationHeight': 'Location Height (ft)',
+#         'verticalApproachAngle': 'Vertical Approach Angle (°)',
+#         'pitcherName': 'Pitcher Name'
+#     }
+#     trackman_df = trackman_df.rename(columns=column_mapping)
+#     trackman_df['ABS_Horizontal'] = trackman_df['Horizontal Break (in)'].abs()
+#     trackman_df['ABS_RelSide'] = trackman_df['RelSide'].abs()
+#     trackman_df['differential_break'] = (trackman_df['InducedVertBreak'] - trackman_df['ABS_Horizontal']).abs()
+#     trackman_df = stuffappend(trackman_df)
+#     make_plots(trackman_df)
+#
+#     class PDFWithConditionalFooter(FPDF):
+#         def footer(self):
+#             if self.page_no() != 1:
+#                 box_x = 0
+#                 box_y = self.h - 20
+#                 box_width = self.w
+#                 box_height = 20
+#                 self.set_fill_color(3, 20, 55)
+#                 self.rect(box_x, box_y, box_width, box_height, style='F')
+#                 self.image('./Logos/logoWriting.png', x=box_x + 10, y=box_y + 2, w=60)
+#
+#     pdf = PDFWithConditionalFooter('P', 'mm', 'A4')
+#     pagewidth = pdf.w
+#     pdf.add_page()
+#     pdf.image('./Logos/logo.png', x=(pagewidth / 2) - 55, y=40, w=110)
+#     pdf.set_font('Helvetica', 'B', 25)
+#     pdf.ln(150)
+#     pdf.cell(0, 15, 'TrackMan Pitching Report', 0, 1, align='C')
+#     pdf.set_font('Helvetica', 'B', 20)
+#     pitcher_name = trackman_df["Pitcher Name"].iloc[0] if "Pitcher Name" in trackman_df.columns else "Unknown"
+#     pdf.cell(0, 5, f'Pitcher: {pitcher_name}', 0, 1, align='C')
+#     pitching_metrics_w = 170
+#     pdf.add_page()
+#     pdf.cell(5, 5, 'Velocity (MPH)', align='L')
+#     pdf.image('Graphs/velocity_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=19.5, w=pitching_metrics_w)
+#     pdf.ln(60)
+#     pdf.cell(5, 5, 'Spin Rate (RPM)', align='L')
+#     pdf.image('Graphs/spinrate_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=79.5, w=pitching_metrics_w)
+#     pdf.ln(60)
+#     pdf.cell(5, 5, 'Stuff+', align='L')
+#     pdf.image('Graphs/stuff+_plot.png', x=(pagewidth - pitching_metrics_w) / 2, y=137.5, w=pitching_metrics_w)
+#     pdf.ln(60)
+#     pdf.cell(5, 5, 'Pitch Location', align='L')
+#     pdf.image('Graphs/locationmap.png', x=(pagewidth - 200) / 2, y=197.5, w=200)
+#     pdf.add_page()
+#     pdf.cell(5, 5, 'Pitch Movement (in)', align='L')
+#     pdf.image('Graphs/movementplot.png', x=(pagewidth - 200) / 2, y=17.5, w=200)
+#     pdf.ln(160)
+#     pdf.cell(5, 5, 'Movement Stats', align='L')
+#     pdf.image('Graphs/percentiletable.png', x=(pagewidth - 200) / 2, y=180, w=200)
+#     pdf.add_page()
+#     pdf.cell(5, 5, 'Your Stuff+ vs Pitches with Similar Velo', align='L')
+#     pdf.image('Graphs/stuffhexmap.png', x=(pagewidth - 200) / 2, y=17.5, w=200)
+#     buffer = BytesIO()
+#     pdf_data = pdf.output(dest='S').encode('latin-1')
+#     buffer = BytesIO(pdf_data)
+#     buffer.seek(0)
+#     files_to_delete = [
+#         'Graphs/velocity_plot.png',
+#         'Graphs/spinrate_plot.png',
+#         'Graphs/stuff+_plot.png',
+#         'Graphs/locationmap.png',
+#         'Graphs/movementplot.png',
+#         'Graphs/percentiletable.png',
+#         'Graphs/stuffhexmap.png'
+#     ]
+#     for file_path in files_to_delete:
+#         try:
+#             if os.path.exists(file_path):
+#                 os.remove(file_path)
+#         except Exception as e:
+#             print(f"Error deleting file {file_path}: {e}")
+#     return Response(
+#         content=buffer.getvalue(),
+#         media_type="application/pdf",
+#         headers={"Content-Disposition": "attachment; filename=trackman_report.pdf"}
+#     )
+#
+# @app.get("/")
+# def health_check():
+#     return {"Server": "Healthy"}
+
 def query_trackman_data(athlete_id, start_date, end_date):
     connection_string = os.environ.get("NEON_DB_CONNECTION")
     if not connection_string:
@@ -504,7 +662,8 @@ def query_trackman_data(athlete_id, start_date, end_date):
         "locationSide",
         "locationHeight",
         "verticalApproachAngle",
-        "createdAt"
+        "createdAt",
+        "stuffPlus"
     FROM "Trackman"
     WHERE "athleteId" = %s
       AND "createdAt" BETWEEN %s AND %s
@@ -515,6 +674,7 @@ def query_trackman_data(athlete_id, start_date, end_date):
     cursor.close()
     conn.close()
     return rows
+
 
 @app.post("/calculate-stuff")
 def calculate_stuff_endpoint(pitch: PitchData):
@@ -529,10 +689,12 @@ def calculate_stuff_endpoint(pitch: PitchData):
     result = calculate_stuff_plus_endpoint(row)
     return {"stuff_plus": result}
 
+
 class ReportData(BaseModel):
     date_one: str
     date_two: str
     athleteId: str
+
 
 @app.post("/generate-trackman-report")
 def generate_trackman_report(report_request: ReportData):
@@ -563,10 +725,17 @@ def generate_trackman_report(report_request: ReportData):
         'pitcherName': 'Pitcher Name'
     }
     trackman_df = trackman_df.rename(columns=column_mapping)
-    trackman_df['ABS_Horizontal'] = trackman_df['Horizontal Break (in)'].abs()
-    trackman_df['ABS_RelSide'] = trackman_df['RelSide'].abs()
-    trackman_df['differential_break'] = (trackman_df['InducedVertBreak'] - trackman_df['ABS_Horizontal']).abs()
-    trackman_df = stuffappend(trackman_df)
+
+    # Remove recalculations of Stuff+
+    # trackman_df['ABS_Horizontal'] = trackman_df['Horizontal Break (in)'].abs()
+    # trackman_df['ABS_RelSide'] = trackman_df['RelSide'].abs()
+    # trackman_df['differential_break'] = (trackman_df['InducedVertBreak'] - trackman_df['ABS_Horizontal']).abs()
+    # trackman_df = stuffappend(trackman_df)
+
+    # Instead, if a precomputed stuffPlus exists, rename it to "Stuff+"
+    if "stuffPlus" in trackman_df.columns:
+        trackman_df = trackman_df.rename(columns={"stuffPlus": "Stuff+"})
+
     make_plots(trackman_df)
 
     class PDFWithConditionalFooter(FPDF):
@@ -637,6 +806,8 @@ def generate_trackman_report(report_request: ReportData):
         headers={"Content-Disposition": "attachment; filename=trackman_report.pdf"}
     )
 
+
 @app.get("/")
 def health_check():
     return {"Server": "Healthy"}
+
