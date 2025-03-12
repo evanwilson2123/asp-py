@@ -164,103 +164,9 @@ def stuffappend(bullpen):
     return bullpen
 
 # (The plotting functions below remain unchanged.)
-# def stuffhex(bullpen):
-#     pitch_types = bullpen['Pitch Type'].unique()
-#     plt.style.use('default')
-#     fig, axes = plt.subplots(3, 2, figsize=(10, 15))
-#     axes = axes.flatten()
-#     fig.patch.set_facecolor('white')
-#     if bullpen['RelSide'].iloc[0] > 0:
-#         base_pitch_data = pitches_with_stuff[pitches_with_stuff['PitcherThrows'] == 'Right']
-#     else:
-#         base_pitch_data = pitches_with_stuff[pitches_with_stuff['PitcherThrows'] == 'Left']
-#     for idx, pitch in enumerate(pitch_types):
-#         pitch_data = base_pitch_data[base_pitch_data['Pitch Type'] == pitch]
-#         bullpen_pitches = bullpen[bullpen['Pitch Type'] == pitch]
-#         bullpen_speed = bullpen_pitches['RelSpeed'].mean()
-#         avg_horizontal = bullpen_pitches['Horizontal Break (in)'].mean()
-#         avg_vertical = bullpen_pitches['InducedVertBreak'].mean()
-#         pitch_data = pitch_data.dropna(subset=['Horizontal Break (in)', 'InducedVertBreak', 'Stuff+'])
-#         pitch_data = pitch_data[~pitch_data.isin([np.inf, -np.inf]).any(axis=1)]
-#         Q1 = pitch_data['Stuff+'].quantile(0.25)
-#         Q3 = pitch_data['Stuff+'].quantile(0.75)
-#         IQR = Q3 - Q1
-#         lower_bound = Q1 - 1.5 * IQR
-#         upper_bound = Q3 + 1.5 * IQR
-#         pitch_data = pitch_data[(pitch_data['Stuff+'] >= lower_bound) & (pitch_data['Stuff+'] <= upper_bound)]
-#         pitch_data = pitch_data[
-#             (pitch_data['RelSpeed'] > bullpen_speed - 1) &
-#             (pitch_data['RelSpeed'] < bullpen_speed + 1)
-#             ]
-#         pitch_data['Horizontal Break (in)'] = pitch_data['Horizontal Break (in)'].clip(upper=25)
-#         pitch_data['InducedVertBreak'] = pitch_data['InducedVertBreak'].clip(upper=25)
-#         pitch_data = pitch_data[pitch_data['Horizontal Break (in)'].abs() + pitch_data['InducedVertBreak'].abs() < 30]
-#         if len(pitch_data) > 0:
-#             max_break = 25
-#             min_break = -25
-#             hb = axes[idx].hexbin(
-#                 x=pitch_data['Horizontal Break (in)'],
-#                 y=pitch_data['InducedVertBreak'],
-#                 C=pitch_data['Stuff+'],
-#                 gridsize=40,
-#                 cmap='coolwarm',
-#                 mincnt=1
-#             )
-#             axes[idx].axhline(y=avg_vertical, color='gray', linestyle='--', alpha=0.5)
-#             axes[idx].axvline(x=avg_horizontal, color='gray', linestyle='--', alpha=0.5)
-#             axes[idx].plot(avg_horizontal, avg_vertical, 'kX', markersize=15, markeredgewidth=3)
-#             axes[idx].set_aspect('equal')
-#             axes[idx].set_xlim(min_break, max_break)
-#             axes[idx].set_ylim(min_break, max_break)
-#             axes[idx].axhline(y=0, color='black', linestyle='-', alpha=0.3)
-#             axes[idx].axvline(x=0, color='black', linestyle='-', alpha=0.3)
-#             axes[idx].set_title(pitch)
-#             axes[idx].set_xlabel('Horizontal Break')
-#             axes[idx].set_ylabel('Vertical Break')
-#             for spine in ['top', 'right', 'bottom', 'left']:
-#                 axes[idx].spines[spine].set_visible(False)
-#             axes[idx].tick_params(axis='both', length=0)
-#             cbar = fig.colorbar(hb, ax=axes[idx], label='Stuff+', fraction=0.04, pad=0.04)
-#             cbar.outline.set_visible(False)
-#             cbar.ax.tick_params(length=0)
-#     for idx in range(len(pitch_types), len(axes)):
-#         fig.delaxes(axes[idx])
-#     plt.tight_layout()
-#     plt.subplots_adjust(wspace=0.5, hspace=0.01)
-#     plt.savefig('Graphs/stuffhexmap.png', dpi=300, bbox_inches='tight')
-#     plt.close(fig)
-
-
-# def stuffplusgraph(bullpen):
-#     sns.set_context("paper", font_scale=1.7,
-#                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
-#     pitch_types = bullpen['Pitch Type'].unique()
-#     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
-#     if len(pitch_types) == 1:
-#         axes = [axes]
-#     for i, pitch in enumerate(pitch_types):
-#         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
-#         mean_stuff = diffpitches['Stuff+'].mean()
-#         sns.kdeplot(diffpitches['Stuff+'], ax=axes[i], fill=True, color=pitch_colors[pitch])
-#         axes[i].set_facecolor('white')
-#         axes[i].axvline(x=mean_stuff, color=pitch_colors[pitch], linestyle=':')
-#         axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
-#         axes[i].set_yticks([])
-#         axes[i].tick_params(axis='both', which='both', length=0)
-#         axes[i].spines['left'].set_visible(False)
-#         axes[i].spines['top'].set_visible(False)
-#         axes[i].spines['right'].set_visible(False)
-#         axes[i].spines['bottom'].set_visible(False)
-#         axes[i].axvline(x=100, color='red', linestyle='--')
-#     axes[-1].set_xticks(np.arange(35, 250, 25))
-#     axes[-1].tick_params(axis='x', length=0, labelsize=10)
-#     axes[-1].set_xlabel('')
-#     plt.subplots_adjust(hspace=0.01)
-#     plt.xlim(min(bullpen['Stuff+'] - 30), max(bullpen['Stuff+']) + 20)
-#     fig.savefig('Graphs/stuff+_plot.png', bbox_inches='tight', dpi=300, format='png')
-#     plt.close(fig)
 def stuffhex(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
+    plt.style.use('default')
     fig, axes = plt.subplots(3, 2, figsize=(10, 15))
     axes = axes.flatten()
     fig.patch.set_facecolor('white')
@@ -269,7 +175,6 @@ def stuffhex(bullpen):
     else:
         base_pitch_data = pitches_with_stuff[pitches_with_stuff['PitcherThrows'] == 'Left']
     for idx, pitch in enumerate(pitch_types):
-        ax = axes[idx]
         pitch_data = base_pitch_data[base_pitch_data['Pitch Type'] == pitch]
         bullpen_pitches = bullpen[bullpen['Pitch Type'] == pitch]
         bullpen_speed = bullpen_pitches['RelSpeed'].mean()
@@ -293,260 +198,168 @@ def stuffhex(bullpen):
         if len(pitch_data) > 0:
             max_break = 25
             min_break = -25
-            hb = ax.hexbin(x=pitch_data['Horizontal Break (in)'], y=pitch_data['InducedVertBreak'],
-                           C=pitch_data['Stuff+'], gridsize=40, cmap='coolwarm', mincnt=1)
-            ax.axhline(y=avg_vertical, color='gray', linestyle='--', alpha=0.5)
-            ax.axvline(x=avg_horizontal, color='gray', linestyle='--', alpha=0.5)
-            ax.plot(avg_horizontal, avg_vertical, 'kX', markersize=15, markeredgewidth=3)
-            ax.set_aspect('equal')
-            ax.set_xlim(min_break, max_break)
-            ax.set_ylim(min_break, max_break)
-            ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-            ax.axvline(x=0, color='black', linestyle='-', alpha=0.3)
-            ax.set_title(pitch)
-            ax.set_xlabel('Horizontal Break')
-            ax.set_ylabel('Vertical Break')
+            hb = axes[idx].hexbin(
+                x=pitch_data['Horizontal Break (in)'],
+                y=pitch_data['InducedVertBreak'],
+                C=pitch_data['Stuff+'],
+                gridsize=40,
+                cmap='coolwarm',
+                mincnt=1
+            )
+            axes[idx].axhline(y=avg_vertical, color='gray', linestyle='--', alpha=0.5)
+            axes[idx].axvline(x=avg_horizontal, color='gray', linestyle='--', alpha=0.5)
+            axes[idx].plot(avg_horizontal, avg_vertical, 'kX', markersize=15, markeredgewidth=3)
+            axes[idx].set_aspect('equal')
+            axes[idx].set_xlim(min_break, max_break)
+            axes[idx].set_ylim(min_break, max_break)
+            axes[idx].axhline(y=0, color='black', linestyle='-', alpha=0.3)
+            axes[idx].axvline(x=0, color='black', linestyle='-', alpha=0.3)
+            axes[idx].set_title(pitch)
+            axes[idx].set_xlabel('Horizontal Break')
+            axes[idx].set_ylabel('Vertical Break')
             for spine in ['top', 'right', 'bottom', 'left']:
-                ax.spines[spine].set_visible(False)
-            ax.tick_params(axis='both', length=0)
-            cbar = fig.colorbar(hb, ax=ax, label='Stuff+', fraction=0.04, pad=0.04)
+                axes[idx].spines[spine].set_visible(False)
+            axes[idx].tick_params(axis='both', length=0)
+            cbar = fig.colorbar(hb, ax=axes[idx], label='Stuff+', fraction=0.04, pad=0.04)
             cbar.outline.set_visible(False)
             cbar.ax.tick_params(length=0)
-    # Remove extra subplots if any
     for idx in range(len(pitch_types), len(axes)):
         fig.delaxes(axes[idx])
-    fig.tight_layout()
-    fig.subplots_adjust(wspace=0.5, hspace=0.01)
-    fig.savefig('Graphs/stuffhexmap.png', dpi=300, bbox_inches='tight')
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.5, hspace=0.01)
+    plt.savefig('Graphs/stuffhexmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
+
 def stuffplusgraph(bullpen):
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
     if len(pitch_types) == 1:
         axes = [axes]
     for i, pitch in enumerate(pitch_types):
-        ax = axes[i]
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_stuff = diffpitches['Stuff+'].mean()
-        sns.kdeplot(diffpitches['Stuff+'], ax=ax, fill=True, color=pitch_colors[pitch])
-        ax.set_facecolor('white')
-        ax.axvline(x=mean_stuff, color=pitch_colors[pitch], linestyle=':')
-        ax.set_ylabel(pitch, rotation=0, va='center', ha='left')
-        ax.set_yticks([])
-        ax.tick_params(axis='both', which='both', length=0)
-        for spine in ['left', 'top', 'right', 'bottom']:
-            ax.spines[spine].set_visible(False)
-        ax.axvline(x=100, color='red', linestyle='--')
+        sns.kdeplot(diffpitches['Stuff+'], ax=axes[i], fill=True, color=pitch_colors[pitch])
+        axes[i].set_facecolor('white')
+        axes[i].axvline(x=mean_stuff, color=pitch_colors[pitch], linestyle=':')
+        axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
+        axes[i].set_yticks([])
+        axes[i].tick_params(axis='both', which='both', length=0)
+        axes[i].spines['left'].set_visible(False)
+        axes[i].spines['top'].set_visible(False)
+        axes[i].spines['right'].set_visible(False)
+        axes[i].spines['bottom'].set_visible(False)
+        axes[i].axvline(x=100, color='red', linestyle='--')
     axes[-1].set_xticks(np.arange(35, 250, 25))
     axes[-1].tick_params(axis='x', length=0, labelsize=10)
     axes[-1].set_xlabel('')
-    fig.tight_layout()
-    fig.savefig('Graphs/stuff+_plot.png', dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(hspace=0.01)
+    plt.xlim(min(bullpen['Stuff+'] - 30), max(bullpen['Stuff+']) + 20)
+    fig.savefig('Graphs/stuff+_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
 
-# def velograph(bullpen):
-#     sns.set_context("paper", font_scale=1.7,
-#                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
-#     pitch_types = bullpen['Pitch Type'].unique()
-#     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
-#     if len(pitch_types) == 1:
-#         axes = [axes]
-#     for i, pitch in enumerate(pitch_types):
-#         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
-#         mean_velo = diffpitches['RelSpeed'].mean()
-#         sns.kdeplot(diffpitches['RelSpeed'], ax=axes[i], fill=True, color=pitch_colors[pitch])
-#         axes[i].set_facecolor('white')
-#         axes[i].axvline(x=mean_velo, color=pitch_colors[pitch], linestyle=':')
-#         axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
-#         axes[i].set_yticks([])
-#         axes[i].tick_params(axis='both', which='both', length=0)
-#         axes[i].spines['left'].set_visible(False)
-#         axes[i].spines['top'].set_visible(False)
-#         axes[i].spines['right'].set_visible(False)
-#         axes[i].spines['bottom'].set_visible(False)
-#     axes[-1].set_xticks(np.arange(65, 105, 5))
-#     axes[-1].tick_params(axis='x', length=0, labelsize=10)
-#     axes[-1].set_xlabel('')
-#     plt.subplots_adjust(hspace=0.01)
-#     plt.xlim(min(bullpen['RelSpeed'] - 5), max(bullpen['RelSpeed']) + 1.5)
-#     fig.savefig('Graphs/velocity_plot.png', bbox_inches='tight', dpi=300, format='png')
-#     plt.close(fig)
 def velograph(bullpen):
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
     if len(pitch_types) == 1:
         axes = [axes]
     for i, pitch in enumerate(pitch_types):
-        ax = axes[i]
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_velo = diffpitches['RelSpeed'].mean()
-        sns.kdeplot(diffpitches['RelSpeed'], ax=ax, fill=True, color=pitch_colors[pitch])
-        ax.set_facecolor('white')
-        ax.axvline(x=mean_velo, color=pitch_colors[pitch], linestyle=':')
-        ax.set_ylabel(pitch, rotation=0, va='center', ha='left')
-        ax.set_yticks([])
-        ax.tick_params(axis='both', which='both', length=0)
-        for spine in ax.spines.values():
-            spine.set_visible(False)
+        sns.kdeplot(diffpitches['RelSpeed'], ax=axes[i], fill=True, color=pitch_colors[pitch])
+        axes[i].set_facecolor('white')
+        axes[i].axvline(x=mean_velo, color=pitch_colors[pitch], linestyle=':')
+        axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
+        axes[i].set_yticks([])
+        axes[i].tick_params(axis='both', which='both', length=0)
+        axes[i].spines['left'].set_visible(False)
+        axes[i].spines['top'].set_visible(False)
+        axes[i].spines['right'].set_visible(False)
+        axes[i].spines['bottom'].set_visible(False)
     axes[-1].set_xticks(np.arange(65, 105, 5))
     axes[-1].tick_params(axis='x', length=0, labelsize=10)
     axes[-1].set_xlabel('')
-    fig.tight_layout()
-    fig.savefig('Graphs/velocity_plot.png', dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(hspace=0.01)
+    plt.xlim(min(bullpen['RelSpeed'] - 5), max(bullpen['RelSpeed']) + 1.5)
+    fig.savefig('Graphs/velocity_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
-# def spinrategraph(bullpen):
-#     sns.set_context("paper", font_scale=1.7,
-#                     rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
-#     pitch_types = bullpen['Pitch Type'].unique()
-#     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
-#     if len(pitch_types) == 1:
-#         axes = [axes]
-#     for i, pitch in enumerate(pitch_types):
-#         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
-#         mean_spin = diffpitches['SpinRate'].mean()
-#         sns.kdeplot(diffpitches['SpinRate'], ax=axes[i], fill=True, color=pitch_colors[pitch])
-#         axes[i].set_facecolor('white')
-#         axes[i].axvline(x=mean_spin, color=pitch_colors[pitch], linestyle=':')
-#         axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
-#         axes[i].set_yticks([])
-#         axes[i].tick_params(axis='both', which='both', length=0)
-#         axes[i].spines['left'].set_visible(False)
-#         axes[i].spines['top'].set_visible(False)
-#         axes[i].spines['right'].set_visible(False)
-#         axes[i].spines['bottom'].set_visible(False)
-#     axes[-1].set_xticks(np.arange(1500, 2500, 250))
-#     axes[-1].tick_params(axis='x', length=0, labelsize=10)
-#     axes[-1].set_xlabel('')
-#     plt.subplots_adjust(hspace=0.01)
-#     plt.xlim(min(bullpen['SpinRate'] - 30), max(bullpen['SpinRate']) + 20)
-#     fig.savefig('Graphs/spinrate_plot.png', bbox_inches='tight', dpi=300, format='png')
-#     plt.close(fig)
+
 def spinrategraph(bullpen):
+    sns.set_context("paper", font_scale=1.7,
+                    rc={"font.family": "serif", "font.weight": "normal", "axes.labelweight": "normal"})
     pitch_types = bullpen['Pitch Type'].unique()
     fig, axes = plt.subplots(len(pitch_types), 1, figsize=(9, 2), sharex=True)
     if len(pitch_types) == 1:
         axes = [axes]
     for i, pitch in enumerate(pitch_types):
-        ax = axes[i]
         diffpitches = bullpen[bullpen['Pitch Type'] == pitch]
         mean_spin = diffpitches['SpinRate'].mean()
-        sns.kdeplot(diffpitches['SpinRate'], ax=ax, fill=True, color=pitch_colors[pitch])
-        ax.set_facecolor('white')
-        ax.axvline(x=mean_spin, color=pitch_colors[pitch], linestyle=':')
-        ax.set_ylabel(pitch, rotation=0, va='center', ha='left')
-        ax.set_yticks([])
-        ax.tick_params(axis='both', which='both', length=0)
-        for spine in ax.spines.values():
-            spine.set_visible(False)
+        sns.kdeplot(diffpitches['SpinRate'], ax=axes[i], fill=True, color=pitch_colors[pitch])
+        axes[i].set_facecolor('white')
+        axes[i].axvline(x=mean_spin, color=pitch_colors[pitch], linestyle=':')
+        axes[i].set_ylabel(pitch, rotation=0, va='center', ha='left')
+        axes[i].set_yticks([])
+        axes[i].tick_params(axis='both', which='both', length=0)
+        axes[i].spines['left'].set_visible(False)
+        axes[i].spines['top'].set_visible(False)
+        axes[i].spines['right'].set_visible(False)
+        axes[i].spines['bottom'].set_visible(False)
     axes[-1].set_xticks(np.arange(1500, 2500, 250))
     axes[-1].tick_params(axis='x', length=0, labelsize=10)
     axes[-1].set_xlabel('')
-    fig.tight_layout()
-    fig.savefig('Graphs/spinrate_plot.png', dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(hspace=0.01)
+    plt.xlim(min(bullpen['SpinRate'] - 30), max(bullpen['SpinRate']) + 20)
+    fig.savefig('Graphs/spinrate_plot.png', bbox_inches='tight', dpi=300, format='png')
     plt.close(fig)
 
 
-# def locationheatmap(bullpen):
-#     pitch_types = bullpen['Pitch Type'].unique()
-#     num_pitches = len(pitch_types)
-#     sz_left, sz_right = -1.0083333, 1.083333
-#     sz_top, sz_bottom = 4, 1
-#     fig, axes = plt.subplots(1, num_pitches, figsize=(5*num_pitches, 5))
-#     axes = np.atleast_1d(axes)
-#     for i, pitch in enumerate(pitch_types):
-#         pitch_data = bullpen[bullpen['Pitch Type'] == pitch]
-#         sns.kdeplot(
-#             data=pitch_data,
-#             x='Location Side (ft)',
-#             y='Location Height (ft)',
-#             fill=True, cmap='coolwarm',
-#             alpha=0.99, levels=100, ax=axes[i]
-#         )
-#         strikezone = patches.Rectangle(
-#             (sz_left, sz_bottom), sz_right*2, sz_top-sz_bottom,
-#             linewidth=2, edgecolor='black', facecolor='none'
-#         )
-#         axes[i].add_patch(strikezone)
-#         axes[i].set_facecolor('white')
-#         axes[i].set_title(f'{pitch}', fontsize=32)
-#         axes[i].set_xlabel('')
-#         axes[i].set_ylabel('')
-#         axes[i].set_xlim(-3, 3)
-#         axes[i].set_ylim(-1, 5.25)
-#         axes[i].set_xticklabels([])
-#         axes[i].set_yticklabels([])
-#         axes[i].set_yticks([])
-#         axes[i].set_xticks([])
-#         for spine in ['left', 'right', 'top', 'bottom']:
-#             axes[i].spines[spine].set_visible(False)
-#     plt.tight_layout()
-#     plt.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
-#     plt.close(fig)
-
-
-# def movementplot(bullpen):
-#     sns.scatterplot(data=bullpen, x="Horizontal Break (in)", y="InducedVertBreak", hue="Pitch Type",
-#                     palette=pitch_colors)
-#     fastball_index = bullpen[bullpen['Pitch Type'] == 'Fastball'].index[0]
-#     if bullpen.loc[fastball_index, 'RelSide'] > 0:
-#         compare = filtered_pitchers[filtered_pitchers['PitcherThrows'] == 'Right']
-#     else:
-#         compare = filtered_pitchers[filtered_pitchers['PitcherThrows'] == 'Left']
-#     for pitch_type in bullpen['Pitch Type'].unique():
-#         subset = compare[compare["Pitch Type"] == pitch_type]
-#         avghor = subset["Horizontal Break (in)"].mean()
-#         avgvert = subset["InducedVertBreak"].mean()
-#         plt.scatter(avghor, avgvert, color=pitch_colors[pitch_type], s=250, alpha=0.5)
-#     plt.scatter(10000, 10000, color='gray', s=250, alpha=0.5, label='Collegiate Average')
-#     x_max = max(abs(bullpen["Horizontal Break (in)"]))
-#     y_max = max(abs(bullpen["InducedVertBreak"]))
-#     limit = max(x_max + 1, y_max + 1)
-#     plt.xlim(-limit, limit)
-#     plt.ylim(-limit, limit)
-#     plt.gca().set_facecolor('white')
-#     plt.gca().set_aspect('equal', adjustable='box')
-#     plt.axhline(0, color='black', linestyle='-')
-#     plt.axvline(0, color='black', linestyle='-')
-#     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-#     for spine in plt.gca().spines.values():
-#         spine.set_visible(False)
-#     plt.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
-#     plt.close()
 def locationheatmap(bullpen):
     pitch_types = bullpen['Pitch Type'].unique()
     num_pitches = len(pitch_types)
+    sz_left, sz_right = -1.0083333, 1.083333
+    sz_top, sz_bottom = 4, 1
     fig, axes = plt.subplots(1, num_pitches, figsize=(5*num_pitches, 5))
     axes = np.atleast_1d(axes)
     for i, pitch in enumerate(pitch_types):
-        ax = axes[i]
         pitch_data = bullpen[bullpen['Pitch Type'] == pitch]
-        sns.kdeplot(data=pitch_data, x='Location Side (ft)', y='Location Height (ft)',
-                    fill=True, cmap='coolwarm', alpha=0.99, levels=100, ax=ax)
-        strikezone = patches.Rectangle(( -1.0083333, 1), 2.0916666, 3, linewidth=2, edgecolor='black', facecolor='none')
-        ax.add_patch(strikezone)
-        ax.set_facecolor('white')
-        ax.set_title(f'{pitch}', fontsize=32)
-        ax.set_xlabel('')
-        ax.set_ylabel('')
-        ax.set_xlim(-3, 3)
-        ax.set_ylim(-1, 5.25)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_xticks([])
-        ax.set_yticks([])
+        sns.kdeplot(
+            data=pitch_data,
+            x='Location Side (ft)',
+            y='Location Height (ft)',
+            fill=True, cmap='coolwarm',
+            alpha=0.99, levels=100, ax=axes[i]
+        )
+        strikezone = patches.Rectangle(
+            (sz_left, sz_bottom), sz_right*2, sz_top-sz_bottom,
+            linewidth=2, edgecolor='black', facecolor='none'
+        )
+        axes[i].add_patch(strikezone)
+        axes[i].set_facecolor('white')
+        axes[i].set_title(f'{pitch}', fontsize=32)
+        axes[i].set_xlabel('')
+        axes[i].set_ylabel('')
+        axes[i].set_xlim(-3, 3)
+        axes[i].set_ylim(-1, 5.25)
+        axes[i].set_xticklabels([])
+        axes[i].set_yticklabels([])
+        axes[i].set_yticks([])
+        axes[i].set_xticks([])
         for spine in ['left', 'right', 'top', 'bottom']:
-            ax.spines[spine].set_visible(False)
-    fig.tight_layout()
-    fig.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
+            axes[i].spines[spine].set_visible(False)
+    plt.tight_layout()
+    plt.savefig('Graphs/locationmap.png', dpi=300, bbox_inches='tight')
     plt.close(fig)
 
+
 def movementplot(bullpen):
-    fig, ax = plt.subplots(figsize=(8, 6))
     sns.scatterplot(data=bullpen, x="Horizontal Break (in)", y="InducedVertBreak", hue="Pitch Type",
-                    palette=pitch_colors, ax=ax)
+                    palette=pitch_colors)
     fastball_index = bullpen[bullpen['Pitch Type'] == 'Fastball'].index[0]
     if bullpen.loc[fastball_index, 'RelSide'] > 0:
         compare = filtered_pitchers[filtered_pitchers['PitcherThrows'] == 'Right']
@@ -556,78 +369,24 @@ def movementplot(bullpen):
         subset = compare[compare["Pitch Type"] == pitch_type]
         avghor = subset["Horizontal Break (in)"].mean()
         avgvert = subset["InducedVertBreak"].mean()
-        ax.scatter(avghor, avgvert, color=pitch_colors[pitch_type], s=250, alpha=0.5)
-    ax.scatter(10000, 10000, color='gray', s=250, alpha=0.5, label='Collegiate Average')
+        plt.scatter(avghor, avgvert, color=pitch_colors[pitch_type], s=250, alpha=0.5)
+    plt.scatter(10000, 10000, color='gray', s=250, alpha=0.5, label='Collegiate Average')
     x_max = max(abs(bullpen["Horizontal Break (in)"]))
     y_max = max(abs(bullpen["InducedVertBreak"]))
     limit = max(x_max + 1, y_max + 1)
-    ax.set_xlim(-limit, limit)
-    ax.set_ylim(-limit, limit)
-    ax.set_facecolor('white')
-    ax.set_aspect('equal', adjustable='box')
-    ax.axhline(0, color='black', linestyle='-')
-    ax.axvline(0, color='black', linestyle='-')
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-    for spine in ax.spines.values():
+    plt.xlim(-limit, limit)
+    plt.ylim(-limit, limit)
+    plt.gca().set_facecolor('white')
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.axhline(0, color='black', linestyle='-')
+    plt.axvline(0, color='black', linestyle='-')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
+    for spine in plt.gca().spines.values():
         spine.set_visible(False)
-    fig.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
-    plt.close(fig)
+    plt.savefig('Graphs/movementplot.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
 
-# def tableheatmap(bullpen):
-#     metrics_mapping = {
-#         'RelSpeed': 'Velocity',
-#         'SpinRate': 'Spin Rate',
-#         'InducedVertBreak': 'IVB',
-#         'Horizontal Break (in)': 'HB',
-#         'Extension': 'Extension',
-#         'Vertical Approach Angle (°)': 'VAA',
-#         'RelHeight': 'Release Height',
-#         'Stuff+': 'Stuff+'
-#     }
-#     invert_metrics = ['Vertical Approach Angle (°)', 'RelHeight']
-#     metrics = list(metrics_mapping.keys())
-#     display_names = list(metrics_mapping.values())
-#     actual_values = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
-#     percentile_data = pd.DataFrame(index=bullpen['Pitch Type'].unique(), columns=metrics, dtype=float)
-#
-#     for pitch_type in bullpen['Pitch Type'].unique():
-#         for metric in metrics:
-#             actual_value = bullpen[bullpen['Pitch Type'] == pitch_type][metric].mean()
-#             actual_values.loc[pitch_type, metric] = float(actual_value)
-#             college_vals = COLLEGE_VALUES.get(pitch_type, {}).get(metric, np.array([]))
-#             if len(college_vals) > 0:
-#                 if metric in invert_metrics:
-#                     percentile = 100 - stats.percentileofscore(college_vals, abs(actual_value))
-#                 else:
-#                     percentile = stats.percentileofscore(college_vals, abs(actual_value))
-#                 percentile_data.loc[pitch_type, metric] = float(percentile)
-#             else:
-#                 percentile_data.loc[pitch_type, metric] = 50.0
-#
-#     actual_values.columns = display_names
-#     percentile_data.columns = display_names
-#     plt.figure(figsize=(14, 3))
-#     heatmap = sns.heatmap(data=percentile_data, annot=actual_values.round(1), fmt='.1f',
-#                           cmap='coolwarm', center=50, vmin=0, vmax=100, cbar_kws={'label': 'Percentile'})
-#     heatmap.xaxis.set_label_position('top')
-#     heatmap.xaxis.set_ticks_position('top')
-#     plt.tick_params(axis='both', which='both', length=0)
-#     plt.xticks(rotation=0)
-#     plt.yticks(rotation=0)
-#     plt.tight_layout()
-#     plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
-#     plt.close()
-
-
-# def make_plots(bullpen):
-#     movementplot(bullpen)
-#     stuffplusgraph(bullpen)
-#     velograph(bullpen)
-#     spinrategraph(bullpen)
-#     locationheatmap(bullpen)
-#     tableheatmap(bullpen)
-#     stuffhex(bullpen)
 def tableheatmap(bullpen):
     metrics_mapping = {
         'RelSpeed': 'Velocity',
@@ -661,19 +420,27 @@ def tableheatmap(bullpen):
 
     actual_values.columns = display_names
     percentile_data.columns = display_names
-    fig, ax = plt.subplots(figsize=(14, 3))
+    plt.figure(figsize=(14, 3))
     heatmap = sns.heatmap(data=percentile_data, annot=actual_values.round(1), fmt='.1f',
-                          cmap='coolwarm', center=50, vmin=0, vmax=100, cbar_kws={'label': 'Percentile'},
-                          ax=ax)
+                          cmap='coolwarm', center=50, vmin=0, vmax=100, cbar_kws={'label': 'Percentile'})
     heatmap.xaxis.set_label_position('top')
     heatmap.xaxis.set_ticks_position('top')
     plt.tick_params(axis='both', which='both', length=0)
     plt.xticks(rotation=0)
     plt.yticks(rotation=0)
-    fig.tight_layout()
-    fig.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
-    plt.close(fig)
+    plt.tight_layout()
+    plt.savefig('Graphs/percentiletable.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
+
+def make_plots(bullpen):
+    movementplot(bullpen)
+    stuffplusgraph(bullpen)
+    velograph(bullpen)
+    spinrategraph(bullpen)
+    locationheatmap(bullpen)
+    tableheatmap(bullpen)
+    stuffhex(bullpen)
 # def make_plots(bullpen):
 #     # List all plotting functions you want to run concurrently.
 #     plot_funcs = [
@@ -696,30 +463,6 @@ def tableheatmap(bullpen):
 ##############################
 # ENDPOINTS
 ##############################
-# def make_plots(bullpen):
-#     movementplot(bullpen)
-#     stuffplusgraph(bullpen)
-#     velograph(bullpen)
-#     spinrategraph(bullpen)
-#     locationheatmap(bullpen)
-#     tableheatmap(bullpen)
-#     stuffhex(bullpen)
-def make_plots(bullpen):
-    # List all plotting functions to run concurrently.
-    plot_funcs = [
-        movementplot,
-        stuffplusgraph,
-        velograph,
-        spinrategraph,
-        locationheatmap,
-        tableheatmap,
-        stuffhex
-    ]
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(func, bullpen.copy()) for func in plot_funcs]
-        for future in futures:
-            future.result()
-
 
 class PitchData(BaseModel):
     Pitch_Type: str
