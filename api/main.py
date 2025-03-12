@@ -467,23 +467,23 @@ def query_trackman_data(athlete_id, start_date, end_date):
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     query = """
     SELECT 
-        pitchReleaseSpeed,
-        spinRate,
-        pitchType,
-        pitcherName,
-        releaseHeight,
-        releaseSide,
-        extension,
-        inducedVerticalBreak,
-        horizontalBreak,
-        locationSide,
-        locationHeight,
-        verticalApproachAngle,
-        createdAt
+        "pitchReleaseSpeed",
+        "spinRate",
+        "pitchType",
+        "pitcherName",
+        "releaseHeight",
+        "releaseSide",
+        "extension",
+        "inducedVerticalBreak",
+        "horizontalBreak",
+        "locationSide",
+        "locationHeight",
+        "verticalApproachAngle",
+        "createdAt"
     FROM "Trackman"
-    WHERE athleteId = %s
-      AND createdAt BETWEEN %s AND %s
-    ORDER BY createdAt ASC;
+    WHERE "athleteId" = %s
+      AND "createdAt" BETWEEN %s AND %s
+    ORDER BY "createdAt" ASC;
     """
     cursor.execute(query, (athlete_id, start_date, end_date))
     rows = cursor.fetchall()
