@@ -621,6 +621,23 @@ def generate_trackman_report(report_request: ReportData):
     buffer = BytesIO(pdf_data)
     buffer.seek(0)
 
+    # Delete temporary image files after generating the PDF.
+    files_to_delete = [
+        'Graphs/velocity_plot.png',
+        'Graphs/spinrate_plot.png',
+        'Graphs/stuff+_plot.png',
+        'Graphs/locationmap.png',  # Make sure you save this with a .png extension
+        'Graphs/movementplot.png',  # Save as .png instead of without extension
+        'Graphs/percentiletable.png',  # Save as .png if needed
+        'Graphs/stuffhexmap.png'
+    ]
+    for file_path in files_to_delete:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
+
     # Return the PDF as the response.
     return Response(
         content=buffer.getvalue(),
