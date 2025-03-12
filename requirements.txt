@@ -11,3 +11,5 @@ matplotlib
 seaborn
 scipy
 fpdf
+psycopg2
+python-dotenv

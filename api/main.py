@@ -17,6 +17,15 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import requests  # For downloading models
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
+
+load_dotenv()  # This will load variables from .env into os.environ
+
+connection_string = os.environ.get("NEON_DB_CONNECTION")
+if not connection_string:
+    raise ValueError("NEON_DB_CONNECTION is not set!")
 
 # Ensure the "Graphs" folder exists
 if not os.path.exists("Graphs"):
@@ -447,6 +456,40 @@ def calculate_stuff_plus_endpoint(row: pd.Series):
             return (xWhiff / 0.32612872148563093) * 100
     else:
         raise HTTPException(status_code=400, detail="Invalid pitch type")
+
+
+
+def query_trackman_data(athlete_id, start_date, end_date):
+    connection_string = os.environ.get("NEON_DB_CONNECTION")
+    if not connection_string:
+        raise ValueError("NEON_DB_CONNECTION is not set!")
+    conn = psycopg2.connect(connection_string)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    query = """
+    SELECT 
+        pitchReleaseSpeed,
+        spinRate,
+        pitchType,
+        pitcherName,
+        releaseHeight,
+        releaseSide,
+        extension,
+        inducedVerticalBreak,
+        horizontalBreak,
+        locationSide,
+        locationHeight,
+        verticalApproachAngle,
+        createdAt
+    FROM Trackman
+    WHERE athleteId = %s
+      AND createdAt BETWEEN %s AND %s
+    ORDER BY createdAt ASC;
+    """
+    cursor.execute(query, (athlete_id, start_date, end_date))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return rows
 
 
 @app.post("/calculate-stuff")
